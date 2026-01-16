@@ -1,0 +1,38 @@
+name: Lab Request
+description: Propose a new hands-on lab
+title: "Lab request: "
+labels: ["lab-request"]
+body:
+  - type: input
+    id: lab-title
+    attributes:
+      label: Lab title
+      placeholder: "Example: Container image signing"
+    validations:
+      required: true
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Phase
+      options:
+        - Phase 1 (Shift Left)
+        - Phase 2 (CI PR Gates)
+        - Phase 3 (Supply Chain)
+        - Phase 4 (DAST/API Testing)
+        - Phase 5 (CD & K8s)
+        - Phase 6 (Runtime Detection)
+        - Phase 7 (IR & Detections)
+    validations:
+      required: true
+  - type: textarea
+    id: objectives
+    attributes:
+      label: Objectives
+      description: What should a participant learn or build?
+    validations:
+      required: true
+  - type: textarea
+    id: prerequisites
+    attributes:
+      label: Prerequisites
+      description: Required tools, services, or accounts.

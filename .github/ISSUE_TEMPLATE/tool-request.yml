@@ -1,0 +1,38 @@
+name: Tool Request
+description: Suggest a new tool or integration for the roadmap
+title: "Tool request: "
+labels: ["tool-request"]
+body:
+  - type: input
+    id: tool-name
+    attributes:
+      label: Tool name
+      placeholder: "Example: Semgrep, Trivy, Falco"
+    validations:
+      required: true
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use case
+      description: What problem does this tool solve in the DevSecOps pipeline?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence or references
+      description: Links to docs, benchmarks, or examples.
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Phase alignment
+      options:
+        - Phase 1 (Shift Left)
+        - Phase 2 (CI PR Gates)
+        - Phase 3 (Supply Chain)
+        - Phase 4 (DAST/API Testing)
+        - Phase 5 (CD & K8s)
+        - Phase 6 (Runtime Detection)
+        - Phase 7 (IR & Detections)
+    validations:
+      required: true

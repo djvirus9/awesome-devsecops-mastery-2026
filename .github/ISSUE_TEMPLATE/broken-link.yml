@@ -1,0 +1,24 @@
+name: Broken Link
+description: Report a broken or outdated link
+title: "Broken link: "
+labels: ["broken-link"]
+body:
+  - type: input
+    id: url
+    attributes:
+      label: Broken URL
+      placeholder: "https://..."
+    validations:
+      required: true
+  - type: textarea
+    id: location
+    attributes:
+      label: Location in repo
+      description: File path and section where the link appears.
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested fix
+      description: Replacement URL or updated resource.

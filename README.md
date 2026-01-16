@@ -4,22 +4,44 @@
 ![Maintained](https://img.shields.io/badge/Maintained%3F-yes-green.svg)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 
-> **"Security is not a gated process; it is a continuous thread."** > This is a comprehensive, stage-by-stage guide to building a modern DevSecOps pipeline—from the first line of code to production runtime.
+> **"Security is not a gated process; it is a continuous thread."**
+> This is a comprehensive, stage-by-stage guide to building a modern DevSecOps pipeline—from the first line of code to production runtime.
 
 ---
 
+## Quick Start (10 minutes)
+
+- Read the overview: [docs/README.md](docs/README.md)
+- Run the first lab: [labs/README.md](labs/README.md)
+- Align on SLAs: [templates/vuln-sla-matrix.md](templates/vuln-sla-matrix.md)
+- See the pipeline example: [pipelines/github-actions/devsecops.yml](pipelines/github-actions/devsecops.yml)
+
+## Golden Path
+
+Recommended stack and order of adoption:
+
+1. Shift-left hygiene: pre-commit + SAST (Gitleaks, Semgrep)
+2. CI PR gates: required checks + SCA (GitHub Actions + Trivy)
+3. Supply chain: SBOM + signing (Syft + Cosign)
+4. DAST/API: staging scans (OWASP ZAP)
+5. CD & K8s: policy-as-code (Kyverno)
+6. Runtime detection: eBPF alerts (Falco)
+7. IR + detections: runbooks and tuning
+
 ## 🧭 Roadmap Navigation
-* [🔄 Phase 1: Shift Left (IDE & Pre-Commit)](#-phase-1-shift-left-ide--pre-commit)
-* [🏗️ Phase 2: CI Security (Build & Static Analysis)](#-phase-2-ci-security-build--static-analysis)
-* [📦 Phase 3: Supply Chain (SBOM & Artifacts)](#-phase-3-supply-chain-sbom--artifacts)
-* [🌐 Phase 4: DAST & Application Testing](#-phase-4-dast--application-testing)
-* [☸️ Phase 5: CD & Infrastructure (Cloud/K8s)](#-phase-5-cd--infrastructure-cloudk8s)
-* [🕵️ Phase 6: Runtime & Threat Detection](#-phase-6-runtime--threat-detection)
-* [🤖 Phase 7: AI-Driven Remediation (2026 Trend)](#-phase-7-ai-driven-remediation-2026-trend)
+
+- [🔄 Phase 1: Shift Left (IDE & Pre-Commit)](#-phase-1-shift-left-ide--pre-commit)
+- [🏗️ Phase 2: CI Security (Build & Static Analysis)](#-phase-2-ci-security-build--static-analysis)
+- [📦 Phase 3: Supply Chain (SBOM & Artifacts)](#-phase-3-supply-chain-sbom--artifacts)
+- [🌐 Phase 4: DAST & Application Testing](#-phase-4-dast--application-testing)
+- [☸️ Phase 5: CD & Infrastructure (Cloud/K8s)](#-phase-5-cd--infrastructure-cloudk8s)
+- [🕵️ Phase 6: Runtime & Threat Detection](#-phase-6-runtime--threat-detection)
+- [🤖 Phase 7: AI-Driven Remediation (2026 Trend)](#-phase-7-ai-driven-remediation-2026-trend)
 
 ---
 
 ## 🔄 Phase 1: Shift Left (IDE & Pre-Commit)
+
 *Goal: Catch vulnerabilities and secrets before they are even pushed to Git.*
 
 - **[Gitleaks](https://github.com/gitleaks/gitleaks)**: Prevent hardcoded secrets (API keys, passwords) from being committed.
@@ -28,6 +50,7 @@
 - **[Snyk IDE Plugin](https://snyk.io/)**: Real-time vulnerability feedback inside VS Code/JetBrains.
 
 ## 🏗️ Phase 2: CI Security (Build & Static Analysis)
+
 *Goal: Automate code quality and vulnerability checks on every PR.*
 
 - **SAST (Static Analysis)**:
@@ -38,6 +61,7 @@
   - **[KICS](https://kics.io/)**: Find security vulnerabilities and compliance issues in IaC.
 
 ## 📦 Phase 3: Supply Chain (SBOM & Artifacts)
+
 *Goal: Secure your "Ingredients list" and ensure dependency integrity.*
 
 - **SCA (Dependency Scanning)**:
@@ -48,6 +72,7 @@
   - **[Sigstore/Cosign](https://github.com/sigstore/cosign)**: Keyless signing to verify image provenance.
 
 ## 🌐 Phase 4: DAST & Application Testing
+
 *Goal: Identify vulnerabilities in the running application (Dynamic Analysis).*
 
 - **[OWASP ZAP](https://www.zaproxy.org/)**: World's most popular free DAST tool.
@@ -55,6 +80,7 @@
 - **[42Crunch](https://42crunch.com/)**: Dedicated security for APIs (REST/GraphQL).
 
 ## ☸️ Phase 5: CD & Infrastructure (Cloud/K8s)
+
 *Goal: Secure deployment and cloud configuration.*
 
 - **[Kyverno](https://kyverno.io/)**: Kubernetes admission controller to block non-compliant pods.
@@ -62,6 +88,7 @@
 - **[ArgoCD](https://argoproj.github.io/cd/)**: Secure GitOps deployments with drift detection.
 
 ## 🕵️ Phase 6: Runtime & Threat Detection
+
 *Goal: Observe behavior in production and block attacks.*
 
 - **[Falco](https://falco.org/)**: The surveillance camera for Kubernetes (eBPF-powered).
@@ -69,6 +96,7 @@
 - **[Istio](https://istio.io/)**: Service mesh to enforce mTLS and zero-trust networking.
 
 ## 🤖 Phase 7: AI-Driven Remediation (2026 Trend)
+
 *Goal: Move from "Finding" to "Fixing" automatically.*
 
 - **[Plexicus](https://www.plexicus.ai/)**: AI agents that generate fix PRs for your security findings.
@@ -78,13 +106,16 @@
 ---
 
 ## Repository Structure
-- [docs](/docs)
-- [labs](/labs)
-- [templates](/templates)
-- [pipelines](/pipelines)
+
+- [docs](docs/README.md)
+- [labs](labs/README.md)
+- [templates](templates/)
+- [pipelines](pipelines/)
 
 ## 🤝 Contributing
+
 Contributions are welcome! If you have a tool or resource that fits the 2026 DevSecOps landscape, please open a PR.
 
 ## 📜 License
+
 Distributed under the MIT License. See `LICENSE` for more information.
