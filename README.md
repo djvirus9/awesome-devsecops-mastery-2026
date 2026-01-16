@@ -77,6 +77,12 @@
 
 ---
 
+## Repository Structure
+- [docs](/docs)
+- [labs](/labs)
+- [templates](/templates)
+- [pipelines](/pipelines)
+
 ## 🤝 Contributing
 Contributions are welcome! If you have a tool or resource that fits the 2026 DevSecOps landscape, please open a PR.
 

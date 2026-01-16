@@ -16,17 +16,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Policy check (placeholder)
-        run: |
-          echo "Policy checks go here."
+        run: echo "OPA/Conftest or custom policy checks"
 
       - name: SAST scan (placeholder)
-        run: |
-          echo "SAST tooling goes here."
+        run: echo "Run SAST (Semgrep, CodeQL, etc.)"
 
       - name: Dependency scan (placeholder)
-        run: |
-          echo "Dependency scanning goes here."
+        run: echo "Run SCA (OWASP Dependency-Check, Snyk, etc.)"
 
       - name: SBOM generation (placeholder)
-        run: |
-          echo "SBOM generation goes here."
+        run: echo "Generate SBOM (Syft, CycloneDX)"

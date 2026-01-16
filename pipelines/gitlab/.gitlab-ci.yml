@@ -1,0 +1,9 @@
+stages:
+  - test
+
+security_checks:
+  stage: test
+  script:
+    - echo "Run SAST"
+    - echo "Run SCA"
+    - echo "Generate SBOM"

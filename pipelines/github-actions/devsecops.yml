@@ -1,0 +1,18 @@
+name: DevSecOps CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  security-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: SAST (placeholder)
+        run: echo "Run SAST"
+      - name: SCA (placeholder)
+        run: echo "Run dependency scan"
+      - name: SBOM (placeholder)
+        run: echo "Generate SBOM"

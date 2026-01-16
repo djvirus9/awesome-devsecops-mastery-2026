@@ -1,3 +1,3 @@
 # Labs
 
-Hands-on labs and exercises live here.
+Hands-on exercises for each phase of the program.
