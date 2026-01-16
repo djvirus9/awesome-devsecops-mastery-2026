@@ -9,6 +9,12 @@
 
 ---
 
+## Who This Is For
+
+- Beginners: guided labs, curated tools, and clear adoption order
+- Practitioners: production-ready controls, metrics, and templates
+- DevOps/SRE/Security: a shared source of truth across disciplines
+
 ## Quick Start (10 minutes)
 
 - Read the overview: [docs/README.md](docs/README.md)
@@ -20,12 +26,12 @@
 
 Recommended stack and order of adoption:
 
-1. Shift-left hygiene: pre-commit + SAST (Gitleaks, Semgrep)
-2. CI PR gates: required checks + SCA (GitHub Actions + Trivy)
-3. Supply chain: SBOM + signing (Syft + Cosign)
-4. DAST/API: staging scans (OWASP ZAP)
-5. CD & K8s: policy-as-code (Kyverno)
-6. Runtime detection: eBPF alerts (Falco)
+1. Shift-left hygiene: pre-commit + SAST ([Gitleaks](https://github.com/gitleaks/gitleaks), [Semgrep](https://semgrep.dev/))
+2. CI PR gates: required checks + SCA ([GitHub Actions](https://docs.github.com/actions) + [Trivy](https://github.com/aquasecurity/trivy))
+3. Supply chain: SBOM + signing ([Syft](https://github.com/anchore/syft) + [Cosign](https://github.com/sigstore/cosign))
+4. DAST/API: staging scans ([OWASP ZAP](https://www.zaproxy.org/))
+5. CD & K8s: policy-as-code ([Kyverno](https://kyverno.io/))
+6. Runtime detection: eBPF alerts ([Falco](https://falco.org/))
 7. IR + detections: runbooks and tuning
 
 ## Lab Navigation
@@ -37,6 +43,18 @@ Recommended stack and order of adoption:
 - [Lab 05: Runtime Detection](labs/lab-05-runtime-detection/README.md)
 - [Lab 06: DAST and API Testing](labs/lab-06-dast-api-testing/README.md)
 - [Lab 07: IR and Detections](labs/lab-07-ir-detections/README.md)
+
+## Key Docs
+
+- Program overview: [docs/README.md](docs/README.md)
+- Reference architecture: [docs/reference-architecture.md](docs/reference-architecture.md)
+- Maturity model: [docs/maturity-model.md](docs/maturity-model.md)
+- Metrics and KPIs: [docs/metrics.md](docs/metrics.md)
+- Learning paths: [docs/learning-paths.md](docs/learning-paths.md)
+- Resource index: [docs/resources.md](docs/resources.md)
+- Glossary: [docs/glossary.md](docs/glossary.md)
+
+---
 
 ## 🧭 Roadmap Navigation
 

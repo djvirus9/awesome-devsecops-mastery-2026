@@ -5,14 +5,27 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   security-checks:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: SAST (placeholder)
-        run: echo "Run SAST"
-      - name: SCA (placeholder)
-        run: echo "Run dependency scan"
-      - name: SBOM (placeholder)
-        run: echo "Generate SBOM"
+
+      - name: SAST (Semgrep)
+        run: |
+          echo "Run SAST" # https://semgrep.dev/
+
+      - name: SCA (Trivy)
+        run: |
+          echo "Run dependency scan" # https://github.com/aquasecurity/trivy
+
+      - name: SBOM (Syft)
+        run: |
+          echo "Generate SBOM" # https://github.com/anchore/syft
+
+      - name: Sign artifacts (Cosign)
+        run: |
+          echo "Sign artifacts" # https://github.com/sigstore/cosign

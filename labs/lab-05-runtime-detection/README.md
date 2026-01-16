@@ -6,7 +6,7 @@ Deploy runtime detection and validate alerting for suspicious behavior.
 
 ## Objectives
 
-- Install a runtime sensor (Falco)
+- Install a runtime sensor
 - Generate a test alert
 - Route alerts to a ticketing or chat channel
 
@@ -19,6 +19,7 @@ Deploy runtime detection and validate alerting for suspicious behavior.
 - Kubernetes cluster
 - Helm installed
 - Access to alerting destination (Slack, email, or ticketing)
+- [Falco](https://falco.org/)
 
 ## Steps
 
@@ -44,6 +45,6 @@ Deploy runtime detection and validate alerting for suspicious behavior.
 
 ## Extensions
 
-- Add custom rules for sensitive namespaces.
-- Integrate with SIEM.
+- Add custom rules from [Falco Rules](https://falco.org/docs/rules/).
+- Integrate with [Prometheus](https://prometheus.io/) and [Grafana](https://grafana.com/).
 - Add suppression for noisy alerts.

@@ -18,7 +18,7 @@ Add local guardrails so secrets and basic security issues are blocked before the
 
 - Git installed
 - Python 3
-- Basic familiarity with git hooks
+- Access to [pre-commit](https://pre-commit.com/), [Gitleaks](https://github.com/gitleaks/gitleaks), [Semgrep](https://semgrep.dev/)
 
 ## Steps
 
@@ -46,11 +46,9 @@ Add local guardrails so secrets and basic security issues are blocked before the
    pre-commit install
    ```
 
-4. Create a deliberate secret or vulnerable snippet in a test file.
+4. Add a test secret or vulnerable snippet and attempt a commit.
 
-5. Attempt a commit and confirm it fails.
-
-6. Fix the issue and re-commit.
+5. Fix the issue and re-commit.
 
 ## Validation
 
@@ -59,6 +57,6 @@ Add local guardrails so secrets and basic security issues are blocked before the
 
 ## Extensions
 
-- Add language-specific SAST rules.
-- Add a custom Semgrep rule pack.
-- Run pre-commit in CI for parity with developer machines.
+- Add [Talisman](https://github.com/thoughtworks/talisman) for additional checks.
+- Add language-specific rule packs in [Semgrep](https://semgrep.dev/).
+- Run pre-commit in CI for parity.

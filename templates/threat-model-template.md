@@ -1,18 +1,26 @@
 # Threat Model Template
 
 ## Scope
+
 - System name and purpose
-- Data classification
-- In-scope components
+- Data classification and compliance needs
+- In-scope components and boundaries
 
-## Diagram
-- Architecture or data flow diagram link
+## Architecture
 
-## Threats
-- STRIDE or attack tree summary
+- Link to diagram (DFD or architecture)
+- Trust boundaries and external dependencies
+
+## Threat Enumeration
+
+- Approach: [STRIDE](https://learn.microsoft.com/security/engineering/threat-modeling), [MITRE ATT&CK](https://attack.mitre.org/)
+- Key threats and abuse cases
 
 ## Mitigations
-- Controls mapped to threats
 
-## Residual Risk
-- Accepted risks and owners
+- Controls mapped to threats
+- Residual risk and acceptance
+
+## Validation
+
+- Tests or monitoring proving controls are effective

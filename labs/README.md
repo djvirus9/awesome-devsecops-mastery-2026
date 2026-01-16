@@ -2,6 +2,8 @@
 
 Hands-on exercises mapped to the seven DevSecOps phases. Each lab is designed to be practical and reusable in real pipelines.
 
+See the recommended order in [docs/learning-paths.md](../docs/learning-paths.md).
+
 ## Index
 
 - Phase 1: Shift Left

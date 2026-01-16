@@ -18,16 +18,13 @@ Build a detection and response loop with documented playbooks and alert QA.
 
 - Access to logs or a SIEM
 - Ticketing or alerting system
+- Detection format such as [Sigma](https://sigmahq.io/)
 
 ## Steps
 
-1. Create a detection rule (Sigma or native SIEM rule).
+1. Create a detection rule mapped to [MITRE ATT&CK](https://attack.mitre.org/).
 
-2. Define a runbook with:
-   - Triage steps
-   - Evidence to collect
-   - Containment actions
-   - Escalation path
+2. Define a runbook with triage, evidence, containment, and escalation steps.
 
 3. Simulate the detection (tabletop or test event).
 
@@ -43,6 +40,6 @@ Build a detection and response loop with documented playbooks and alert QA.
 
 ## Extensions
 
-- Add quarterly detection reviews.
+- Add case management with [TheHive](https://thehive-project.org/).
 - Automate ticket creation from alerts.
 - Add post-incident retrospectives and metrics.

@@ -6,7 +6,7 @@ Use policy-as-code to block risky Kubernetes workloads at deploy time.
 
 ## Objectives
 
-- Install a policy engine (Kyverno or Gatekeeper)
+- Install a policy engine
 - Enforce baseline policies
 - Add an exception path
 
@@ -18,6 +18,7 @@ Use policy-as-code to block risky Kubernetes workloads at deploy time.
 
 - Access to a Kubernetes cluster
 - `kubectl` configured
+- [Kyverno](https://kyverno.io/) or [OPA Gatekeeper](https://open-policy-agent.github.io/gatekeeper/)
 
 ## Steps
 
@@ -26,7 +27,7 @@ Use policy-as-code to block risky Kubernetes workloads at deploy time.
    kubectl create -f https://raw.githubusercontent.com/kyverno/kyverno/main/config/install.yaml
    ```
 
-2. Apply a baseline policy (example: non-root + resource limits).
+2. Apply a baseline policy (example: non-root).
    ```yaml
    apiVersion: kyverno.io/v1
    kind: ClusterPolicy
@@ -49,9 +50,7 @@ Use policy-as-code to block risky Kubernetes workloads at deploy time.
 
 3. Attempt to deploy a privileged pod and confirm it is blocked.
 
-4. Add an exception namespace with a policy exception label.
-
-5. Re-test deployment into the exception namespace.
+4. Add an exception namespace with a label and documented approval.
 
 ## Validation
 
@@ -60,6 +59,6 @@ Use policy-as-code to block risky Kubernetes workloads at deploy time.
 
 ## Extensions
 
-- Require image signatures.
+- Require image signatures with [Cosign](https://github.com/sigstore/cosign).
 - Enforce allowed registries.
-- Add pod security standards (restricted baseline).
+- Apply [Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/).

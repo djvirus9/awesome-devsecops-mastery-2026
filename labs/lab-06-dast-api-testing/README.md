@@ -19,6 +19,7 @@ Run dynamic application security testing in staging and validate API security us
 - Staging environment URL
 - OpenAPI spec (JSON or YAML)
 - Docker installed
+- [OWASP ZAP](https://www.zaproxy.org/)
 
 ## Steps
 
@@ -48,5 +49,5 @@ Run dynamic application security testing in staging and validate API security us
 ## Extensions
 
 - Add authenticated scans with session scripts.
-- Run fuzzing on high-risk endpoints.
-- Add regression testing for fixed findings.
+- Run fuzzing with [Nuclei](https://github.com/projectdiscovery/nuclei).
+- Add API testing with [42Crunch](https://42crunch.com/).

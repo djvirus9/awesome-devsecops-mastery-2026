@@ -16,8 +16,8 @@ Enforce security checks on pull requests with required status checks and risk-ba
 
 ## Prerequisites
 
-- GitHub repository admin access
-- CI runner enabled
+- Repository admin access
+- CI enabled (e.g., [GitHub Actions](https://docs.github.com/actions))
 
 ## Steps
 
@@ -31,28 +31,24 @@ Enforce security checks on pull requests with required status checks and risk-ba
        steps:
          - uses: actions/checkout@v4
          - name: SAST
-           run: echo "Run SAST"
+           run: echo "Run SAST" # https://semgrep.dev/
          - name: SCA
-           run: echo "Run SCA"
+           run: echo "Run SCA" # https://github.com/aquasecurity/trivy
    ```
 
-2. In GitHub Settings, enable branch protection for `main`.
+2. Enable branch protection for `main` and require the security checks.
 
-3. Require status checks for the security workflow.
+3. Define thresholds (example: fail on Critical/High findings).
 
-4. Define thresholds (example): fail build on Critical/High findings.
-
-5. Add a security exception process:
-   - Use an issue template for exceptions
-   - Require a security approval label
+4. Add a security exception process using [templates/security-exception-template.md](../../templates/security-exception-template.md).
 
 ## Validation
 
-- PRs cannot merge without passing the required checks.
-- Exceptions are visible and auditable.
+- PRs cannot merge without passing required checks.
+- Exceptions are documented and time-bound.
 
 ## Extensions
 
-- Add code coverage minimums.
-- Add secret scanning and license checks.
-- Add time-bound exceptions and auto-expiry.
+- Add [CodeQL](https://codeql.github.com/) and [Dependabot](https://docs.github.com/en/code-security/dependabot).
+- Add license checks with [FOSSA](https://fossa.com/).
+- Add automatic ticket creation on failed checks.

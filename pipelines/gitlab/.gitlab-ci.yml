@@ -4,6 +4,7 @@ stages:
 security_checks:
   stage: test
   script:
-    - echo "Run SAST"
-    - echo "Run SCA"
-    - echo "Generate SBOM"
+    - echo "Run SAST" # https://semgrep.dev/
+    - echo "Run SCA" # https://github.com/aquasecurity/trivy
+    - echo "Generate SBOM" # https://github.com/anchore/syft
+    - echo "Sign artifacts" # https://github.com/sigstore/cosign

@@ -18,7 +18,7 @@ Generate an SBOM and sign artifacts to improve supply chain integrity.
 
 - Container build or artifact output
 - Access to a container registry
-- Cosign installed
+- [Syft](https://github.com/anchore/syft) and [Cosign](https://github.com/sigstore/cosign) installed
 
 ## Steps
 
@@ -37,7 +37,7 @@ Generate an SBOM and sign artifacts to improve supply chain integrity.
    COSIGN_EXPERIMENTAL=1 cosign verify-blob --signature sbom.json.sig sbom.json
    ```
 
-4. Store the SBOM alongside the build artifact.
+4. Store the SBOM with the build artifact.
 
 5. Add a CI gate that fails if SBOM generation or verification fails.
 
@@ -48,6 +48,6 @@ Generate an SBOM and sign artifacts to improve supply chain integrity.
 
 ## Extensions
 
-- Add SLSA provenance attestations.
-- Enforce signing with keyless identities (OIDC).
-- Publish SBOMs to a vulnerability management system.
+- Add [SLSA](https://slsa.dev/) provenance attestations.
+- Scan SBOMs with [Grype](https://github.com/anchore/grype).
+- Enforce signed images in K8s admission policies.
