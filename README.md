@@ -55,6 +55,7 @@ Recommended stack and order of adoption:
 - Tool comparison: [docs/tool-comparison.md](docs/tool-comparison.md)
 - Case studies: [docs/case-studies.md](docs/case-studies.md)
 - Cheatsheets: [docs/cheatsheets.md](docs/cheatsheets.md)
+- Awesome catalog: [docs/awesome-catalog.md](docs/awesome-catalog.md)
 - Glossary: [docs/glossary.md](docs/glossary.md)
 
 ## Practical Assets

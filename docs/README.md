@@ -13,6 +13,7 @@ Start here for the DevSecOps mastery program. This section links the roadmap, ar
 - Tool comparison: [tool-comparison.md](tool-comparison.md)
 - Case studies: [case-studies.md](case-studies.md)
 - Cheatsheets: [cheatsheets.md](cheatsheets.md)
+- Awesome catalog: [awesome-catalog.md](awesome-catalog.md)
 - Glossary: [glossary.md](glossary.md)
 
 ## Phases
