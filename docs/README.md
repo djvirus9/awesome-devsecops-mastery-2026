@@ -16,6 +16,8 @@ Start here for the DevSecOps mastery program. This section links the roadmap, ar
 - Awesome catalog: [awesome-catalog.md](awesome-catalog.md)
 - Glossary: [glossary.md](glossary.md)
 - Incident playbooks: [../playbooks/README.md](../playbooks/README.md)
+- Policy packs: [../policies/README.md](../policies/README.md)
+- Metrics dashboards: [../dashboards/README.md](../dashboards/README.md)
 
 ## Phases
 

@@ -64,6 +64,8 @@ Recommended stack and order of adoption:
 - Ready configs: [configs/README.md](configs/README.md)
 - Operational checklists: [checklists/README.md](checklists/README.md)
 - Incident playbooks: [playbooks/README.md](playbooks/README.md)
+- Policy packs: [policies/README.md](policies/README.md)
+- Metrics dashboards: [dashboards/README.md](dashboards/README.md)
 
 ## Real-world Examples
 

@@ -1,0 +1,28 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "graphTooltip": 0,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "MTTR (days)",
+      "targets": [],
+      "fieldConfig": {"defaults": {"unit": "d"}, "overrides": []}
+    },
+    {
+      "type": "stat",
+      "title": "SLA Compliance (%)",
+      "targets": [],
+      "fieldConfig": {"defaults": {"unit": "percent"}, "overrides": []}
+    },
+    {
+      "type": "stat",
+      "title": "SBOM Coverage (%)",
+      "targets": [],
+      "fieldConfig": {"defaults": {"unit": "percent"}, "overrides": []}
+    }
+  ],
+  "schemaVersion": 38,
+  "title": "DevSecOps KPIs",
+  "version": 1
+}
