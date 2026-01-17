@@ -18,6 +18,8 @@ Start here for the DevSecOps mastery program. This section links the roadmap, ar
 - Incident playbooks: [../playbooks/README.md](../playbooks/README.md)
 - Policy packs: [../policies/README.md](../policies/README.md)
 - Metrics dashboards: [../dashboards/README.md](../dashboards/README.md)
+- Repo templates: [../repo-templates/README.md](../repo-templates/README.md)
+- Skill maps: [../skill-maps/README.md](../skill-maps/README.md)
 
 ## Phases
 
