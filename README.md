@@ -68,6 +68,8 @@ Recommended stack and order of adoption:
 - Metrics dashboards: [dashboards/README.md](dashboards/README.md)
 - Repo templates: [repo-templates/README.md](repo-templates/README.md)
 - Skill maps: [skill-maps/README.md](skill-maps/README.md)
+- Secure SDLC checklists: [sdlc-checklists/README.md](sdlc-checklists/README.md)
+- Sample repos: [samples/README.md](samples/README.md)
 
 ## Real-world Examples
 
