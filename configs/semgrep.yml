@@ -1,0 +1,10 @@
+rules:
+  - id: no-eval
+    patterns:
+      - pattern: eval(...)
+    message: "Avoid eval; use safer alternatives."
+    severity: ERROR
+    languages: [python, javascript]
+    metadata:
+      category: security
+      cwe: "CWE-95"

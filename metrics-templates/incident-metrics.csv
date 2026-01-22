@@ -1,0 +1,3 @@
+incident_id,severity,detected_at,acknowledged_at,resolved_at,root_cause,mttr_hours
+INC-001,High,2026-01-01T10:00:00Z,2026-01-01T10:30:00Z,2026-01-02T12:00:00Z,Dependency vuln,25.5
+INC-002,Critical,2026-01-03T08:00:00Z,2026-01-03T08:10:00Z,2026-01-03T18:00:00Z,Credential leak,10.0

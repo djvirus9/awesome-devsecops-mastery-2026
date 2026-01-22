@@ -1,0 +1,39 @@
+name: Microservice CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: returntocorp/semgrep-action@v1
+        with:
+          config: p/ci
+      - uses: aquasecurity/trivy-action@0.19.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+      - uses: anchore/sbom-action/download-syft@v0
+      - run: syft dir:. -o cyclonedx-json > sbom.json
+      - uses: sigstore/cosign-installer@v3.5.0
+      - env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: cosign sign-blob --yes --output-signature sbom.sig sbom.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: |
+            sbom.json
+            sbom.sig
+      - name: DAST (placeholder)
+        run: echo "Run ZAP baseline against staging URL"

@@ -1,0 +1,20 @@
+[
+  {
+    "incident_id": "INC-001",
+    "severity": "High",
+    "detected_at": "2026-01-01T10:00:00Z",
+    "acknowledged_at": "2026-01-01T10:30:00Z",
+    "resolved_at": "2026-01-02T12:00:00Z",
+    "root_cause": "Dependency vuln",
+    "mttr_hours": 25.5
+  },
+  {
+    "incident_id": "INC-002",
+    "severity": "Critical",
+    "detected_at": "2026-01-03T08:00:00Z",
+    "acknowledged_at": "2026-01-03T08:10:00Z",
+    "resolved_at": "2026-01-03T18:00:00Z",
+    "root_cause": "Credential leak",
+    "mttr_hours": 10.0
+  }
+]

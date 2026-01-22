@@ -1,0 +1,7 @@
+severity: CRITICAL,HIGH
+ignore-unfixed: true
+timeout: 10m
+scan:
+  security-checks:
+    - vuln
+    - config

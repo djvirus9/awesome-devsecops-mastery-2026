@@ -1,0 +1,12 @@
+apiVersion: policy.sigstore.dev/v1alpha1
+kind: ClusterImagePolicy
+metadata:
+  name: require-cosign-signature
+spec:
+  images:
+    - glob: "ghcr.io/*"
+  authorities:
+    - keyless:
+        url: "https://fulcio.sigstore.dev"
+        identities:
+          - issuer: "https://token.actions.githubusercontent.com"

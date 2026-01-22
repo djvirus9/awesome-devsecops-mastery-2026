@@ -9,6 +9,12 @@
 
 ---
 
+## Who This Is For
+
+- Beginners: guided labs, curated tools, and clear adoption order
+- Practitioners: production-ready controls, metrics, and templates
+- DevOps/SRE/Security: a shared source of truth across disciplines
+
 ## Quick Start (10 minutes)
 
 - Read the overview: [docs/README.md](docs/README.md)
@@ -20,13 +26,69 @@
 
 Recommended stack and order of adoption:
 
-1. Shift-left hygiene: pre-commit + SAST (Gitleaks, Semgrep)
-2. CI PR gates: required checks + SCA (GitHub Actions + Trivy)
-3. Supply chain: SBOM + signing (Syft + Cosign)
-4. DAST/API: staging scans (OWASP ZAP)
-5. CD & K8s: policy-as-code (Kyverno)
-6. Runtime detection: eBPF alerts (Falco)
+1. Shift-left hygiene: pre-commit + SAST ([Gitleaks](https://github.com/gitleaks/gitleaks), [Semgrep](https://semgrep.dev/))
+2. CI PR gates: required checks + SCA ([GitHub Actions](https://docs.github.com/actions) + [Trivy](https://github.com/aquasecurity/trivy))
+3. Supply chain: SBOM + signing ([Syft](https://github.com/anchore/syft) + [Cosign](https://github.com/sigstore/cosign))
+4. DAST/API: staging scans ([OWASP ZAP](https://www.zaproxy.org/))
+5. CD & K8s: policy-as-code ([Kyverno](https://kyverno.io/))
+6. Runtime detection: eBPF alerts ([Falco](https://falco.org/))
 7. IR + detections: runbooks and tuning
+
+## Lab Navigation
+
+- [Lab 01: Pre-commit SAST](labs/lab-01-precommit-sast/README.md)
+- [Lab 02: CI PR Gates](labs/lab-02-ci-pr-gates/README.md)
+- [Lab 03: SBOM and Signing](labs/lab-03-sbom-signing/README.md)
+- [Lab 04: K8s Admission Policies](labs/lab-04-k8s-admission-policies/README.md)
+- [Lab 05: Runtime Detection](labs/lab-05-runtime-detection/README.md)
+- [Lab 06: DAST and API Testing](labs/lab-06-dast-api-testing/README.md)
+- [Lab 07: IR and Detections](labs/lab-07-ir-detections/README.md)
+
+## Key Docs
+
+- Program overview: [docs/README.md](docs/README.md)
+- Reference architecture: [docs/reference-architecture.md](docs/reference-architecture.md)
+- Maturity model: [docs/maturity-model.md](docs/maturity-model.md)
+- Metrics and KPIs: [docs/metrics.md](docs/metrics.md)
+- Learning paths: [docs/learning-paths.md](docs/learning-paths.md)
+- Resource index: [docs/resources.md](docs/resources.md)
+- Tool comparison: [docs/tool-comparison.md](docs/tool-comparison.md)
+- Case studies: [docs/case-studies.md](docs/case-studies.md)
+- Cheatsheets: [docs/cheatsheets.md](docs/cheatsheets.md)
+- Awesome catalog: [docs/awesome-catalog.md](docs/awesome-catalog.md)
+- Glossary: [docs/glossary.md](docs/glossary.md)
+
+## Practical Assets
+
+- Project blueprints: [projects/README.md](projects/README.md)
+- Ready configs: [configs/README.md](configs/README.md)
+- Operational checklists: [checklists/README.md](checklists/README.md)
+- Incident playbooks: [playbooks/README.md](playbooks/README.md)
+- Policy packs: [policies/README.md](policies/README.md)
+- Metrics dashboards: [dashboards/README.md](dashboards/README.md)
+- Repo templates: [repo-templates/README.md](repo-templates/README.md)
+- Skill maps: [skill-maps/README.md](skill-maps/README.md)
+- Secure SDLC checklists: [sdlc-checklists/README.md](sdlc-checklists/README.md)
+- Sample repos: [samples/README.md](samples/README.md)
+- Integration guides: [integrations/README.md](integrations/README.md)
+- Security testing recipes: [recipes/README.md](recipes/README.md)
+- Incident metrics templates: [metrics-templates/README.md](metrics-templates/README.md)
+- Maturity scorecards: [scorecards/README.md](scorecards/README.md)
+- Evidence packs: [evidence-packs/README.md](evidence-packs/README.md)
+
+## Real-world Examples
+
+- [GitHub Actions starter workflows](https://github.com/actions/starter-workflows)
+- [Semgrep rules](https://github.com/semgrep/semgrep-rules)
+- [Trivy examples](https://github.com/aquasecurity/trivy)
+- [Syft + Grype examples](https://github.com/anchore/syft)
+- [Cosign examples](https://github.com/sigstore/cosign)
+- [Kyverno policy library](https://github.com/kyverno/policies)
+- [OPA Gatekeeper library](https://github.com/open-policy-agent/gatekeeper-library)
+- [Falco rules](https://github.com/falcosecurity/rules)
+- [OpenTelemetry demos](https://github.com/open-telemetry/opentelemetry-demo)
+
+---
 
 ## 🧭 Roadmap Navigation
 

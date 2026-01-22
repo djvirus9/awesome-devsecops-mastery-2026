@@ -5,14 +5,47 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   security-checks:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: SAST (placeholder)
-        run: echo "Run SAST"
-      - name: SCA (placeholder)
-        run: echo "Run dependency scan"
-      - name: SBOM (placeholder)
-        run: echo "Generate SBOM"
+
+      - name: Semgrep SAST
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: p/ci
+
+      - name: Trivy SCA (filesystem)
+        uses: aquasecurity/trivy-action@0.19.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+
+      - name: Install Syft
+        uses: anchore/sbom-action/download-syft@v0
+
+      - name: Generate SBOM (CycloneDX)
+        run: syft dir:. -o cyclonedx-json > sbom.json
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.5.0
+
+      - name: Sign SBOM (keyless)
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: cosign sign-blob --yes --output-signature sbom.sig sbom.json
+
+      - name: Upload SBOM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: |
+            sbom.json
+            sbom.sig

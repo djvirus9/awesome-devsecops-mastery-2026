@@ -1,9 +1,39 @@
 stages:
   - test
 
-security_checks:
+variables:
+  SEMGREP_RULES: p/ci
+
+semgrep:
   stage: test
+  image: returntocorp/semgrep
   script:
-    - echo "Run SAST"
-    - echo "Run SCA"
-    - echo "Generate SBOM"
+    - semgrep ci --config ${SEMGREP_RULES}
+
+trivy_fs:
+  stage: test
+  image: aquasec/trivy:0.50.1
+  script:
+    - trivy fs --severity CRITICAL,HIGH --ignore-unfixed .
+
+sbom_syft:
+  stage: test
+  image: anchore/syft:v0.101.0
+  script:
+    - syft dir:. -o cyclonedx-json > sbom.json
+  artifacts:
+    paths:
+      - sbom.json
+
+sign_sbom:
+  stage: test
+  image: gcr.io/projectsigstore/cosign:v2.2.4
+  script:
+    - COSIGN_EXPERIMENTAL=1 cosign sign-blob --yes --output-signature sbom.sig sbom.json
+  dependencies:
+    - sbom_syft
+  artifacts:
+    paths:
+      - sbom.sig
+  when: manual
+  allow_failure: true
