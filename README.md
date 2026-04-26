@@ -148,6 +148,7 @@ Recommended stack and order of adoption:
 - **[Kyverno](https://kyverno.io/)**: Kubernetes admission controller to block non-compliant pods.
 - **[Prowler](https://github.com/prowler-cloud/prowler)**: AWS, Azure, and GCP security assessment and hardening.
 - **[ArgoCD](https://argoproj.github.io/cd/)**: Secure GitOps deployments with drift detection.
+- **[KubeStellar Console](https://github.com/kubestellar/console)**: Multi-cluster Kubernetes compliance dashboard with Kyverno policy visualization and ArgoCD deployment tracking.
 
 ## 🕵️ Phase 6: Runtime & Threat Detection
 
