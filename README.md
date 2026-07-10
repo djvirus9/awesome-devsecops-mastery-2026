@@ -139,6 +139,7 @@ Recommended stack and order of adoption:
 
 - **[OWASP ZAP](https://www.zaproxy.org/)**: World's most popular free DAST tool.
 - **[Nuclei](https://github.com/projectdiscovery/nuclei)**: Template-based scanning for fast vulnerability detection.
+- **[Darkmoon](https://github.com/ASCIT31/Dark-Moon)**: Open-source autonomous AI DAST platform and MCP host with per-technology offensive sub-agents and an evidence trail per finding.
 - **[42Crunch](https://42crunch.com/)**: Dedicated security for APIs (REST/GraphQL).
 
 ## ☸️ Phase 5: CD & Infrastructure (Cloud/K8s)
