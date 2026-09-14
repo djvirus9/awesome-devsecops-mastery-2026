@@ -61,7 +61,11 @@ def main():
         if [item["id"] for item in owned["items"]] != ["item-1"]:
             raise RuntimeError("List response violated the ownership boundary")
         check(base + "/v1/items/item-1", 404, "demo-bob-token")
-        print("Container smoke passed: health, authentication, ownership, read-only runtime")
+        run("exec", container, "python", "-c",
+            "from pathlib import Path; "
+            "assert 'gunicorn.ctl' not in Path('/proc/net/unix').read_text(); "
+            "assert not Path('/home/app/.gunicorn/gunicorn.ctl').exists()")
+        print("Container smoke passed: health, authentication, ownership, read-only runtime, no control socket")
     finally:
         subprocess.run(["docker", "stop", "--time", "5", container], check=True,
                        stdout=subprocess.DEVNULL)

@@ -49,10 +49,11 @@ def admission_matches(result, allowed, policy=None):
             and not re.search(r"failed calling webhook|no endpoints available|context deadline exceeded", result.stdout, re.I))
 
 
-def kyverno_policies_ready(document):
+def kyverno_policies_ready(document, expected=POLICIES):
     """Kyverno ValidatingPolicy readiness is nested, not a Ready condition."""
-    policies = {obj.get("metadata", {}).get("name"): obj for obj in document.get("items", [])}
-    return (set(policies) == set(POLICIES)
+    items = document.get("items", [document] if document.get("kind") == "ValidatingPolicy" else [])
+    policies = {obj.get("metadata", {}).get("name"): obj for obj in items}
+    return (set(policies) == set(expected)
             and all(obj.get("status", {}).get("conditionStatus", {}).get("ready") is True
                     for obj in policies.values()))
 
@@ -120,11 +121,11 @@ class Validation:
     def fixture(self, name):
         return ROOT / "policies/fixtures" / f"{name}.yaml"
 
-    def wait_policies_ready(self):
+    def wait_policies_ready(self, expected=POLICIES):
         deadline = time.monotonic() + 120
         while True:
-            result = self.kube("Policy readiness", "get", "validatingpolicies", *POLICIES, "-o", "json")
-            if kyverno_policies_ready(json.loads(result.stdout)):
+            result = self.kube("Policy readiness", "get", "validatingpolicies", *expected, "-o", "json")
+            if kyverno_policies_ready(json.loads(result.stdout), expected):
                 return
             if time.monotonic() >= deadline:
                 raise RuntimeError("Kyverno policy readiness timed out; inspect conditionStatus in commands.log")
@@ -280,7 +281,15 @@ print('PASS: uid, capabilities, no-new-privileges, read-only root, writable tmp,
             "--minutes", "1", "--ticket", "CI-LAB-04", "--approver", "disposable-ci-operator",
             "--reason", "Synthetic server-dry-run expiry validation"])
         exception = json.loads(result.stdout)
-        (self.report / "exception.json").write_text(json.dumps(exception, indent=2) + "\n")
+        exception_path = self.report / "exception.json"
+        exception_path.write_text(json.dumps(exception, indent=2) + "\n")
+        guard = json.loads(self.run("Render derived deadline guard", [str(ROOT / ".venv/bin/python"),
+            "policies/render-exception.py", "--guard-for", str(exception_path)]).stdout)
+        guard_name = guard["metadata"]["name"]
+        (self.report / "deadline-guard.json").write_text(json.dumps(guard, indent=2) + "\n")
+        self.apply_object("Install deadline guard before granting exception", guard)
+        self.wait_policies_ready((guard_name,))
+        self.record("exception-deadline-guard-ready")
         self.apply_object("Apply bounded exception", exception)
         self.admission("exception-exact-object", self.fixture("missing-limits"))
         self.admission("exception-does-not-cover-other-object", self.fixture("init-missing-limits"),
@@ -288,9 +297,22 @@ print('PASS: uid, capabilities, no-new-privileges, read-only root, writable tmp,
         expiry = dt.datetime.fromisoformat(exception["spec"]["expiresAt"].replace("Z", "+00:00"))
         while dt.datetime.now(dt.timezone.utc) <= expiry + dt.timedelta(seconds=2):
             time.sleep(1)
-        self.admission("exception-expired", self.fixture("missing-limits"), allowed=False, policy="require-resource-limits")
+        self.admission("exception-expired-guard-denial", self.fixture("missing-limits"), allowed=False, policy=guard_name)
+        retained = json.loads(self.kube("Exception retained after deadline", "-n", "policy-exceptions", "get",
+            "policyexception.policies.kyverno.io", "reference-limits-exercise", "-o", "json").stdout)
+        if retained["spec"] != exception["spec"] or retained["metadata"].get("deletionTimestamp"):
+            raise RuntimeError("Exception changed or was deleted before the deadline assertion")
+        self.record("expired-exception-retained-without-refresh")
+        corrected = yaml.safe_load(self.fixture("good").read_text())
+        corrected["metadata"]["name"] = "missing-limits"
+        corrected_path = self.scratch / "corrected-missing-limits.json"
+        corrected_path.write_text(json.dumps(corrected))
+        self.admission("expired-exception-corrected-object-accepted", corrected_path)
         self.kube("Remove expired exception", "-n", "policy-exceptions", "delete",
                   "policyexception.policies.kyverno.io", "reference-limits-exercise")
+        self.admission("original-limits-restored-after-revocation", self.fixture("missing-limits"),
+                       allowed=False, policy="require-resource-limits")
+        self.kube("Remove deadline guard after original enforcement restored", "delete", "validatingpolicy", guard_name)
 
     def network_rollback(self):
         result = self.run("Network boundary Jobs", ["bash", "projects/k8s-gitops/check-network.sh"])

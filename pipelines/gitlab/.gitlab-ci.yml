@@ -52,8 +52,9 @@ trivy_fs:
 policy_fixtures:
   stage: scan
   script:
+    - python -m pip install --require-hashes -r requirements-dev.txt
     - python scripts/install_tool.py kyverno gator
-    - PATH="$CI_PROJECT_DIR/.tools/bin:$PATH" bash policies/verify.sh
+    - PYTHON_BIN=python PATH="$CI_PROJECT_DIR/.tools/bin:$PATH" bash policies/verify.sh
 
 sbom_syft:
   stage: sbom

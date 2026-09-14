@@ -12,8 +12,6 @@ spec:
       name: "require-resource-limits"
       kind: "ValidatingPolicy"
   matchConditions:
-    - name: not-expired
-      expression: time.now() < timestamp('2099-01-01T00:00:00Z')
     -
       name: "exact-local-pod"
       expression: "object.kind == 'Pod' && object.metadata.namespace == 'devsecops-reference' && object.metadata.name == 'missing-limits'"

@@ -5,6 +5,8 @@ import json
 from pathlib import Path
 import unittest
 
+from gunicorn.config import Config
+
 API_PATH = Path(__file__).resolve().parents[1] / "samples/sample-api/app.py"
 SPEC = importlib.util.spec_from_file_location("sample_api", API_PATH)
 api = importlib.util.module_from_spec(SPEC)
@@ -12,6 +14,14 @@ SPEC.loader.exec_module(api)
 
 
 class SampleApiTests(unittest.TestCase):
+    def test_container_disables_optional_gunicorn_control_socket(self):
+        dockerfile = API_PATH.with_name("Dockerfile").read_text()
+        command = json.loads(next(line[4:] for line in dockerfile.splitlines() if line.startswith("CMD ")))
+        self.assertEqual(command[0], "gunicorn")
+        options = Config().parser().parse_args(command[1:])
+        self.assertIs(options.control_socket_disable, True)
+        self.assertEqual(options.worker_tmp_dir, "/tmp")
+
     def setUp(self):
         self.app = api.create_app({"TESTING": True, "API_TOKENS_JSON": json.dumps({
             "demo-alice-token": "alice", "demo-bob-token": "bob",

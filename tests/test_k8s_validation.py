@@ -1,8 +1,12 @@
 """Offline guardrails, not a substitute for the disposable-cluster integration."""
 import importlib.util
+import copy
+import datetime as dt
+import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -13,9 +17,32 @@ ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location("k8s_validation", ROOT / "projects/k8s-gitops/validate_live.py")
 k8s = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(k8s)
+RENDER_SPEC = importlib.util.spec_from_file_location("exception_renderer", ROOT / "policies/render-exception.py")
+renderer = importlib.util.module_from_spec(RENDER_SPEC)
+RENDER_SPEC.loader.exec_module(renderer)
 
 
 class K8sValidationTests(unittest.TestCase):
+    def test_rendered_exception_uses_native_expiry_and_supported_scope_only(self):
+        before = dt.datetime.now(dt.timezone.utc)
+        command = [sys.executable, str(ROOT / 'policies/render-exception.py'), '--minutes', '1',
+                   '--ticket', 'TEST', '--approver', 'local-test', '--reason', 'native expiry regression']
+        result = subprocess.run(command, capture_output=True, text=True, check=True)
+        spec = json.loads(result.stdout)['spec']
+        expiry = dt.datetime.fromisoformat(spec['expiresAt'].replace('Z', '+00:00'))
+        self.assertGreater(expiry, before + dt.timedelta(seconds=58))
+        self.assertLess(expiry, dt.datetime.now(dt.timezone.utc) + dt.timedelta(seconds=61))
+        self.assertEqual(spec['policyRefs'], [{'name': 'require-resource-limits', 'kind': 'ValidatingPolicy'}])
+        self.assertEqual(len(spec['matchConditions']), 1)
+        expression = spec['matchConditions'][0]['expression']
+        self.assertNotIn('time.', expression)
+        self.assertIn("object.metadata.name == 'missing-limits'", expression)
+        self.assertIn("object.metadata.namespace == 'devsecops-reference'", expression)
+        for minutes in ['0', '121']:
+            invalid = command.copy()
+            invalid[invalid.index('--minutes') + 1] = minutes
+            self.assertNotEqual(subprocess.run(invalid, capture_output=True).returncode, 0)
+
     def test_kyverno_readiness_uses_live_nested_status_and_all_named_policies(self):
         document = {"items": [{"metadata": {"name": name}, "status": {
             "conditionStatus": {"ready": True, "conditions": [
@@ -30,6 +57,71 @@ class K8sValidationTests(unittest.TestCase):
         self.assertFalse(k8s.kyverno_policies_ready(document))
         self.assertFalse(k8s.kyverno_policies_ready({"items": document["items"][1:]}))
         self.assertFalse(k8s.kyverno_policies_ready({}))
+        single = {"kind": "ValidatingPolicy", "metadata": {"name": renderer.GUARD_NAME},
+                  "status": {"conditionStatus": {"ready": True}}}
+        self.assertTrue(k8s.kyverno_policies_ready(single, (renderer.GUARD_NAME,)))
+        self.assertFalse(k8s.kyverno_policies_ready(single))
+
+    def test_deadline_guard_derives_original_validation_and_covers_all_pod_paths(self):
+        exception = yaml.safe_load((ROOT / 'policies/kyverno/tests/exception-active/exception.yaml').read_text())
+        original = yaml.safe_load((ROOT / 'policies/kyverno/require-resource-limits.yaml').read_text())
+        guard = renderer.deadline_guard(exception)
+        self.assertEqual(guard['metadata']['name'], renderer.GUARD_NAME)
+        self.assertNotIn(renderer.GUARD_NAME, [ref['name'] for ref in exception['spec']['policyRefs']])
+        self.assertEqual(guard['spec']['validationActions'], ['Deny'])
+        self.assertEqual(guard['spec']['failurePolicy'], 'Fail')
+        self.assertFalse(guard['spec']['evaluation']['background']['enabled'])
+        self.assertEqual(guard['spec']['variables'], original['spec']['variables'])
+        self.assertEqual(guard['spec']['matchConstraints']['resourceRules'], [original['spec']['matchConstraints']['resourceRules'][0]])
+        self.assertEqual(guard['spec']['matchConditions'][-1]['expression'], renderer.EXACT_OBJECT)
+        for source, validation in zip(original['spec']['validations'], guard['spec']['validations'], strict=True):
+            self.assertEqual(validation['expression'], 'time.now() < timestamp("2099-01-01T00:00:00Z") || (' + source['expression'] + ')')
+        for field, bad in [('policyRefs', []), ('matchConditions', []), ('expiresAt', '2099-01-01')]:
+            altered = copy.deepcopy(exception)
+            altered['spec'][field] = bad
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                renderer.deadline_guard(altered)
+
+    def test_deadline_workflow_grants_only_after_guard_and_revokes_before_cleanup(self):
+        validation = object.__new__(k8s.Validation)
+        exception = yaml.safe_load((ROOT / 'policies/kyverno/tests/exception-expired/exception.yaml').read_text())
+        guard = renderer.deadline_guard(exception)
+        events = []
+
+        def run(name, *args, **kwargs):
+            events.append(name)
+            obj = guard if name == 'Render derived deadline guard' else exception
+            return subprocess.CompletedProcess([], 0, json.dumps(obj))
+
+        def kube(name, *args, **kwargs):
+            events.append(name)
+            return subprocess.CompletedProcess([], 0, json.dumps(exception))
+
+        def admission(name, manifest, **kwargs):
+            events.append(name)
+            if name == 'exception-expired-guard-denial':
+                self.assertFalse(kwargs['allowed'])
+                self.assertEqual(kwargs['policy'], renderer.GUARD_NAME)
+            if name == 'original-limits-restored-after-revocation':
+                self.assertEqual(kwargs['policy'], 'require-resource-limits')
+            if name == 'expired-exception-corrected-object-accepted':
+                corrected = json.loads(manifest.read_text())
+                self.assertEqual(corrected['metadata']['name'], 'missing-limits')
+                self.assertIn('limits', corrected['spec']['containers'][0]['resources'])
+
+        with tempfile.TemporaryDirectory() as temporary:
+            validation.report = validation.scratch = Path(temporary)
+            with patch.object(validation, 'run', side_effect=run), patch.object(validation, 'kube', side_effect=kube), \
+                    patch.object(validation, 'apply_object', side_effect=lambda name, obj: events.append(name)), \
+                    patch.object(validation, 'wait_policies_ready', side_effect=lambda names: events.append('guard-ready')), \
+                    patch.object(validation, 'admission', side_effect=admission), patch.object(validation, 'record'):
+                validation.enforce_exception()
+        ordered = ['Install deadline guard before granting exception', 'guard-ready', 'Apply bounded exception',
+                   'exception-exact-object', 'exception-expired-guard-denial', 'Exception retained after deadline',
+                   'expired-exception-corrected-object-accepted', 'Remove expired exception',
+                   'original-limits-restored-after-revocation', 'Remove deadline guard after original enforcement restored']
+        positions = [events.index(name) for name in ordered]
+        self.assertEqual(positions, sorted(positions))
 
     def test_reporting_permission_is_read_only_exact_resource_and_controller(self):
         role, binding = list(yaml.safe_load_all((ROOT / 'projects/k8s-gitops/kyverno-report-rbac.yaml').read_text()))

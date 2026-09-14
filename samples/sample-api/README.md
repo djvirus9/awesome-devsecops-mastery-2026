@@ -62,7 +62,7 @@ make container
 make container-test
 ```
 
-The default image name is `devsecops-reference:local`; `make container` builds it but does not start a service or publish it. The smoke helper starts a uniquely named, temporary container on a random loopback-only host port, checks health/authentication/ownership, and stops that container. It uses a read-only filesystem, dropped capabilities, no new privileges, and a small `/tmp` mount.
+The default image name is `devsecops-reference:local`; `make container` builds it but does not start a service or publish it. The smoke helper starts a uniquely named, temporary container on a random loopback-only host port, checks health/authentication/ownership and the absence of the unused Gunicorn control socket, and stops that container. It uses a read-only filesystem, dropped capabilities, no new privileges, and a small `/tmp` mount. The image explicitly disables Gunicorn's control interface; no writable home directory is needed for that optional feature.
 
 For an interactive local session, stop any existing server on port 8080 and run:
 
