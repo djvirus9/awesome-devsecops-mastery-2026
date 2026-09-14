@@ -1,30 +1,11 @@
-# Security Policy
+# Security policy
 
-## Reporting a Vulnerability
+Report vulnerabilities in this repository's code, workflows or examples through [GitHub private vulnerability reporting](https://github.com/djvirus9/awesome-devsecops-mastery-2026/security/advisories/new). Use the repository Security tab → Report a vulnerability. Do not post credentials, personal data or sensitive exploit details in a public issue.
 
-Please report security issues privately so we can resolve them before disclosure.
+Include the affected commit/path, a clear description of the unsafe behavior, impact, and a minimal local demonstration or test where appropriate. State what was observed versus inferred and suggest a fix if available. Reports about linked third-party products belong to their maintainers.
 
-- Contact: open a GitHub Security Advisory or email the maintainer listed in `CODEOWNERS`.
-- Do not file public issues for security vulnerabilities.
+This is an educational project, not a hosted production service or a bug-bounty program. No response-time commitment, payment or external testing authorization is offered. Review focuses on the current default branch; older examples may require updating.
 
-## What to Include
+If GitHub's private report option is unavailable, do not publish the sensitive details. Use GitHub's [reporting guidance](https://docs.github.com/en/code-security/security-advisories/working-with-repository-security-advisories/privately-reporting-a-security-vulnerability) to check availability; a separate private maintainer email is not currently published.
 
-- Summary and impact
-- Steps to reproduce
-- Affected versions or commits
-- Proof of concept (if available)
-- Suggested remediation (if known)
-
-## Response SLA
-
-We aim to triage reports within **72 hours** and provide a remediation plan or mitigation timeline.
-
-## Safe Harbor
-
-We support good-faith security research consistent with this policy. We will not pursue legal action for
-reports that avoid privacy violations, data destruction, or service disruption.
-
-## Disclosure Guidance
-
-Please allow a reasonable remediation window before public disclosure. We will coordinate timelines and
-credit where appropriate.
+Ordinary documentation corrections can use public issues or pull requests. Community conduct is addressed in [the Code of Conduct](CODE_OF_CONDUCT.md).

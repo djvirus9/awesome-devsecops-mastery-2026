@@ -1,0 +1,6 @@
+rules:
+  - id: no-hardcoded-password
+    pattern: password = "..."
+    message: "Illustrative rule: load passwords from a managed secret source."
+    severity: ERROR
+    languages: [python]

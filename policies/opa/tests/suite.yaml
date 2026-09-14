@@ -1,0 +1,57 @@
+apiVersion: "test.gatekeeper.sh/v1alpha1"
+kind: "Suite"
+metadata:
+  name: "reference-gatekeeper"
+tests:
+  -
+    name: "required-app-label"
+    template: "../templates/require-labels.yaml"
+    constraint: "../require-labels.yaml"
+    cases:
+      -
+        name: "good"
+        object: "../../fixtures/good.yaml"
+        assertions:
+          -
+            violations: 0
+      -
+        name: "missing-app-label"
+        object: "../../fixtures/missing-app-label.yaml"
+        assertions:
+          -
+            violations: 1
+      -
+        name: "empty-app-label"
+        object: "../../fixtures/empty-app-label.yaml"
+        assertions:
+          -
+            violations: 1
+      -
+        name: "outside-namespace"
+        object: "../../fixtures/outside-namespace.yaml"
+        assertions:
+          -
+            violations: 0
+  -
+    name: "no-hostpath"
+    template: "../templates/disallow-hostpath.yaml"
+    constraint: "../disallow-hostpath.yaml"
+    cases:
+      -
+        name: "good"
+        object: "../../fixtures/good.yaml"
+        assertions:
+          -
+            violations: 0
+      -
+        name: "hostpath"
+        object: "../../fixtures/hostpath.yaml"
+        assertions:
+          -
+            violations: 1
+      -
+        name: "outside-namespace"
+        object: "../../fixtures/outside-namespace.yaml"
+        assertions:
+          -
+            violations: 0

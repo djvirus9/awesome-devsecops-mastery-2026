@@ -1,0 +1,127 @@
+apiVersion: "cli.kyverno.io/v1alpha1"
+kind: "Test"
+metadata:
+  name: "workload-templates"
+policies:
+  - "../../require-non-root.yaml"
+  - "../../disallow-privileged.yaml"
+  - "../../require-resource-limits.yaml"
+  - "../../restrict-workload.yaml"
+resources:
+  - "../../../../projects/k8s-gitops/base/deployment.yaml"
+  - "../../../fixtures/bad-deployment.yaml"
+  - "../../../fixtures/good-job.yaml"
+  - "../../../fixtures/bad-cronjob.yaml"
+results:
+  -
+    isValidatingPolicy: true
+    policy: "require-non-root"
+    kind: "Deployment"
+    resources:
+      - "sample-api"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "disallow-privileged"
+    kind: "Deployment"
+    resources:
+      - "sample-api"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-resource-limits"
+    kind: "Deployment"
+    resources:
+      - "sample-api"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "restrict-workload"
+    kind: "Deployment"
+    resources:
+      - "sample-api"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-non-root"
+    kind: "Deployment"
+    resources:
+      - "bad-deployment"
+    result: "fail"
+  -
+    isValidatingPolicy: true
+    policy: "disallow-privileged"
+    kind: "Deployment"
+    resources:
+      - "bad-deployment"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-resource-limits"
+    kind: "Deployment"
+    resources:
+      - "bad-deployment"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "restrict-workload"
+    kind: "Deployment"
+    resources:
+      - "bad-deployment"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-non-root"
+    kind: "Job"
+    resources:
+      - "good-job"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "disallow-privileged"
+    kind: "Job"
+    resources:
+      - "good-job"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-resource-limits"
+    kind: "Job"
+    resources:
+      - "good-job"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "restrict-workload"
+    kind: "Job"
+    resources:
+      - "good-job"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-non-root"
+    kind: "CronJob"
+    resources:
+      - "bad-cronjob"
+    result: "fail"
+  -
+    isValidatingPolicy: true
+    policy: "disallow-privileged"
+    kind: "CronJob"
+    resources:
+      - "bad-cronjob"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-resource-limits"
+    kind: "CronJob"
+    resources:
+      - "bad-cronjob"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "restrict-workload"
+    kind: "CronJob"
+    resources:
+      - "bad-cronjob"
+    result: "pass"

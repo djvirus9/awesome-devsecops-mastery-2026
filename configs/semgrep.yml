@@ -1,0 +1,17 @@
+rules:
+  - id: no-eval
+    pattern: eval(...)
+    message: "Avoid eval; use safer alternatives."
+    severity: ERROR
+    languages: [python]
+    metadata:
+      category: security
+      cwe: ["CWE-95: Improper Neutralization of Directives in Dynamically Evaluated Code"]
+  - id: no-eval-javascript
+    pattern: eval(...)
+    message: "Avoid eval; use structured data and explicit operations."
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      cwe: ["CWE-95: Improper Neutralization of Directives in Dynamically Evaluated Code"]

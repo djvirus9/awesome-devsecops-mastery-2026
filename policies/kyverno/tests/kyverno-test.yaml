@@ -1,0 +1,707 @@
+apiVersion: "cli.kyverno.io/v1alpha1"
+kind: "Test"
+metadata:
+  name: "reference-pod-controls"
+policies:
+  - "../require-non-root.yaml"
+  - "../disallow-privileged.yaml"
+  - "../require-resource-limits.yaml"
+  - "../restrict-workload.yaml"
+resources:
+  - "../../fixtures/good.yaml"
+  - "../../fixtures/container-non-root.yaml"
+  - "../../fixtures/missing-non-root.yaml"
+  - "../../fixtures/override-root.yaml"
+  - "../../fixtures/uid-zero.yaml"
+  - "../../fixtures/privileged.yaml"
+  - "../../fixtures/init-privileged.yaml"
+  - "../../fixtures/ephemeral-privileged.yaml"
+  - "../../fixtures/init-root.yaml"
+  - "../../fixtures/ephemeral-root.yaml"
+  - "../../fixtures/missing-limits.yaml"
+  - "../../fixtures/zero-limits.yaml"
+  - "../../fixtures/init-missing-limits.yaml"
+  - "../../fixtures/ephemeral-no-limits.yaml"
+  - "../../fixtures/hostpath.yaml"
+  - "../../fixtures/writable-root.yaml"
+  - "../../fixtures/privilege-escalation.yaml"
+  - "../../fixtures/added-capability.yaml"
+  - "../../fixtures/token-mounted.yaml"
+  - "../../fixtures/unconfined-seccomp.yaml"
+  - "../../fixtures/host-network.yaml"
+  - "../../fixtures/outside-namespace.yaml"
+  - "../../fixtures/missing-app-label.yaml"
+  - "../../fixtures/empty-app-label.yaml"
+results:
+  -
+    isValidatingPolicy: true
+    policy: "require-non-root"
+    kind: "Pod"
+    resources:
+      - "good"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "disallow-privileged"
+    kind: "Pod"
+    resources:
+      - "good"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-resource-limits"
+    kind: "Pod"
+    resources:
+      - "good"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "restrict-workload"
+    kind: "Pod"
+    resources:
+      - "good"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-non-root"
+    kind: "Pod"
+    resources:
+      - "container-non-root"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "disallow-privileged"
+    kind: "Pod"
+    resources:
+      - "container-non-root"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-resource-limits"
+    kind: "Pod"
+    resources:
+      - "container-non-root"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "restrict-workload"
+    kind: "Pod"
+    resources:
+      - "container-non-root"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-non-root"
+    kind: "Pod"
+    resources:
+      - "missing-non-root"
+    result: "fail"
+  -
+    isValidatingPolicy: true
+    policy: "disallow-privileged"
+    kind: "Pod"
+    resources:
+      - "missing-non-root"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-resource-limits"
+    kind: "Pod"
+    resources:
+      - "missing-non-root"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "restrict-workload"
+    kind: "Pod"
+    resources:
+      - "missing-non-root"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-non-root"
+    kind: "Pod"
+    resources:
+      - "override-root"
+    result: "fail"
+  -
+    isValidatingPolicy: true
+    policy: "disallow-privileged"
+    kind: "Pod"
+    resources:
+      - "override-root"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-resource-limits"
+    kind: "Pod"
+    resources:
+      - "override-root"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "restrict-workload"
+    kind: "Pod"
+    resources:
+      - "override-root"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-non-root"
+    kind: "Pod"
+    resources:
+      - "uid-zero"
+    result: "fail"
+  -
+    isValidatingPolicy: true
+    policy: "disallow-privileged"
+    kind: "Pod"
+    resources:
+      - "uid-zero"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-resource-limits"
+    kind: "Pod"
+    resources:
+      - "uid-zero"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "restrict-workload"
+    kind: "Pod"
+    resources:
+      - "uid-zero"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-non-root"
+    kind: "Pod"
+    resources:
+      - "privileged"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "disallow-privileged"
+    kind: "Pod"
+    resources:
+      - "privileged"
+    result: "fail"
+  -
+    isValidatingPolicy: true
+    policy: "require-resource-limits"
+    kind: "Pod"
+    resources:
+      - "privileged"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "restrict-workload"
+    kind: "Pod"
+    resources:
+      - "privileged"
+    result: "fail"
+  -
+    isValidatingPolicy: true
+    policy: "require-non-root"
+    kind: "Pod"
+    resources:
+      - "init-privileged"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "disallow-privileged"
+    kind: "Pod"
+    resources:
+      - "init-privileged"
+    result: "fail"
+  -
+    isValidatingPolicy: true
+    policy: "require-resource-limits"
+    kind: "Pod"
+    resources:
+      - "init-privileged"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "restrict-workload"
+    kind: "Pod"
+    resources:
+      - "init-privileged"
+    result: "fail"
+  -
+    isValidatingPolicy: true
+    policy: "require-non-root"
+    kind: "Pod"
+    resources:
+      - "ephemeral-privileged"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "disallow-privileged"
+    kind: "Pod"
+    resources:
+      - "ephemeral-privileged"
+    result: "fail"
+  -
+    isValidatingPolicy: true
+    policy: "require-resource-limits"
+    kind: "Pod"
+    resources:
+      - "ephemeral-privileged"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "restrict-workload"
+    kind: "Pod"
+    resources:
+      - "ephemeral-privileged"
+    result: "fail"
+  -
+    isValidatingPolicy: true
+    policy: "require-non-root"
+    kind: "Pod"
+    resources:
+      - "init-root"
+    result: "fail"
+  -
+    isValidatingPolicy: true
+    policy: "disallow-privileged"
+    kind: "Pod"
+    resources:
+      - "init-root"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-resource-limits"
+    kind: "Pod"
+    resources:
+      - "init-root"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "restrict-workload"
+    kind: "Pod"
+    resources:
+      - "init-root"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-non-root"
+    kind: "Pod"
+    resources:
+      - "ephemeral-root"
+    result: "fail"
+  -
+    isValidatingPolicy: true
+    policy: "disallow-privileged"
+    kind: "Pod"
+    resources:
+      - "ephemeral-root"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-resource-limits"
+    kind: "Pod"
+    resources:
+      - "ephemeral-root"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "restrict-workload"
+    kind: "Pod"
+    resources:
+      - "ephemeral-root"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-non-root"
+    kind: "Pod"
+    resources:
+      - "missing-limits"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "disallow-privileged"
+    kind: "Pod"
+    resources:
+      - "missing-limits"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-resource-limits"
+    kind: "Pod"
+    resources:
+      - "missing-limits"
+    result: "fail"
+  -
+    isValidatingPolicy: true
+    policy: "restrict-workload"
+    kind: "Pod"
+    resources:
+      - "missing-limits"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-non-root"
+    kind: "Pod"
+    resources:
+      - "zero-limits"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "disallow-privileged"
+    kind: "Pod"
+    resources:
+      - "zero-limits"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-resource-limits"
+    kind: "Pod"
+    resources:
+      - "zero-limits"
+    result: "fail"
+  -
+    isValidatingPolicy: true
+    policy: "restrict-workload"
+    kind: "Pod"
+    resources:
+      - "zero-limits"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-non-root"
+    kind: "Pod"
+    resources:
+      - "init-missing-limits"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "disallow-privileged"
+    kind: "Pod"
+    resources:
+      - "init-missing-limits"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-resource-limits"
+    kind: "Pod"
+    resources:
+      - "init-missing-limits"
+    result: "fail"
+  -
+    isValidatingPolicy: true
+    policy: "restrict-workload"
+    kind: "Pod"
+    resources:
+      - "init-missing-limits"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-non-root"
+    kind: "Pod"
+    resources:
+      - "ephemeral-no-limits"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "disallow-privileged"
+    kind: "Pod"
+    resources:
+      - "ephemeral-no-limits"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-resource-limits"
+    kind: "Pod"
+    resources:
+      - "ephemeral-no-limits"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "restrict-workload"
+    kind: "Pod"
+    resources:
+      - "ephemeral-no-limits"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-non-root"
+    kind: "Pod"
+    resources:
+      - "hostpath"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "disallow-privileged"
+    kind: "Pod"
+    resources:
+      - "hostpath"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-resource-limits"
+    kind: "Pod"
+    resources:
+      - "hostpath"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "restrict-workload"
+    kind: "Pod"
+    resources:
+      - "hostpath"
+    result: "fail"
+  -
+    isValidatingPolicy: true
+    policy: "require-non-root"
+    kind: "Pod"
+    resources:
+      - "writable-root"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "disallow-privileged"
+    kind: "Pod"
+    resources:
+      - "writable-root"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-resource-limits"
+    kind: "Pod"
+    resources:
+      - "writable-root"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "restrict-workload"
+    kind: "Pod"
+    resources:
+      - "writable-root"
+    result: "fail"
+  -
+    isValidatingPolicy: true
+    policy: "require-non-root"
+    kind: "Pod"
+    resources:
+      - "privilege-escalation"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "disallow-privileged"
+    kind: "Pod"
+    resources:
+      - "privilege-escalation"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-resource-limits"
+    kind: "Pod"
+    resources:
+      - "privilege-escalation"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "restrict-workload"
+    kind: "Pod"
+    resources:
+      - "privilege-escalation"
+    result: "fail"
+  -
+    isValidatingPolicy: true
+    policy: "require-non-root"
+    kind: "Pod"
+    resources:
+      - "added-capability"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "disallow-privileged"
+    kind: "Pod"
+    resources:
+      - "added-capability"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-resource-limits"
+    kind: "Pod"
+    resources:
+      - "added-capability"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "restrict-workload"
+    kind: "Pod"
+    resources:
+      - "added-capability"
+    result: "fail"
+  -
+    isValidatingPolicy: true
+    policy: "require-non-root"
+    kind: "Pod"
+    resources:
+      - "token-mounted"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "disallow-privileged"
+    kind: "Pod"
+    resources:
+      - "token-mounted"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-resource-limits"
+    kind: "Pod"
+    resources:
+      - "token-mounted"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "restrict-workload"
+    kind: "Pod"
+    resources:
+      - "token-mounted"
+    result: "fail"
+  -
+    isValidatingPolicy: true
+    policy: "require-non-root"
+    kind: "Pod"
+    resources:
+      - "unconfined-seccomp"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "disallow-privileged"
+    kind: "Pod"
+    resources:
+      - "unconfined-seccomp"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-resource-limits"
+    kind: "Pod"
+    resources:
+      - "unconfined-seccomp"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "restrict-workload"
+    kind: "Pod"
+    resources:
+      - "unconfined-seccomp"
+    result: "fail"
+  -
+    isValidatingPolicy: true
+    policy: "require-non-root"
+    kind: "Pod"
+    resources:
+      - "host-network"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "disallow-privileged"
+    kind: "Pod"
+    resources:
+      - "host-network"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-resource-limits"
+    kind: "Pod"
+    resources:
+      - "host-network"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "restrict-workload"
+    kind: "Pod"
+    resources:
+      - "host-network"
+    result: "fail"
+  -
+    isValidatingPolicy: true
+    policy: "require-non-root"
+    kind: "Pod"
+    resources:
+      - "outside-namespace"
+    result: "skip"
+  -
+    isValidatingPolicy: true
+    policy: "disallow-privileged"
+    kind: "Pod"
+    resources:
+      - "outside-namespace"
+    result: "skip"
+  -
+    isValidatingPolicy: true
+    policy: "require-resource-limits"
+    kind: "Pod"
+    resources:
+      - "outside-namespace"
+    result: "skip"
+  -
+    isValidatingPolicy: true
+    policy: "restrict-workload"
+    kind: "Pod"
+    resources:
+      - "outside-namespace"
+    result: "skip"
+  -
+    isValidatingPolicy: true
+    policy: "require-non-root"
+    kind: "Pod"
+    resources:
+      - "missing-app-label"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "disallow-privileged"
+    kind: "Pod"
+    resources:
+      - "missing-app-label"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-resource-limits"
+    kind: "Pod"
+    resources:
+      - "missing-app-label"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "restrict-workload"
+    kind: "Pod"
+    resources:
+      - "missing-app-label"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-non-root"
+    kind: "Pod"
+    resources:
+      - "empty-app-label"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "disallow-privileged"
+    kind: "Pod"
+    resources:
+      - "empty-app-label"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "require-resource-limits"
+    kind: "Pod"
+    resources:
+      - "empty-app-label"
+    result: "pass"
+  -
+    isValidatingPolicy: true
+    policy: "restrict-workload"
+    kind: "Pod"
+    resources:
+      - "empty-app-label"
+    result: "pass"

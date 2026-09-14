@@ -1,0 +1,6 @@
+# Compatibility notice only. This is not a GitHub Actions workflow.
+# Use scripts/bootstrap_template.py from the source repository root.
+status: compatibility-reference
+profile: serverless
+canonical_workflow: ../../.github/workflows/devsecops-golden-pipeline.yml
+setup_guide: README.md

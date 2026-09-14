@@ -1,0 +1,89 @@
+name: Disposable platform validation
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      image_reference:
+        description: 'Optional verified sample-api image, using its complete ghcr.io repository@sha256 digest'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: platform-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  kubernetes:
+    name: Kubernetes integration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - run: make setup PYTHON=python
+      - run: python scripts/install_tool.py kind helm kubectl cosign
+      - name: Validate the isolated application deployment and policy behavior
+        env:
+          IMAGE_REFERENCE: ${{ inputs.image_reference || '' }}
+          REGISTRY_TOKEN: ${{ github.event_name == 'workflow_dispatch' && secrets.GITHUB_TOKEN || '' }}
+          REGISTRY_USER: ${{ github.actor }}
+        run: bash projects/k8s-gitops/validate-live.sh
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: kubernetes-integration-evidence
+          path: reports/k8s/
+          retention-days: 14
+          if-no-files-found: error
+
+  dashboard:
+    name: Grafana integration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Validate synthetic metrics, dashboard queries and rendered panels
+        run: python3 scripts/validate_dashboard.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: dashboard-integration-evidence
+          path: reports/dashboard/
+          retention-days: 14
+          if-no-files-found: error
+
+  required:
+    name: Platform checks
+    if: always()
+    needs: [kubernetes, dashboard]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Require successful live integration checks
+        env:
+          CHECK_RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PY'
+          import json, os, sys
+          results = json.loads(os.environ['CHECK_RESULTS'])
+          failed = [name for name, result in results.items()
+                    if result['result'] != 'success']
+          if failed:
+              sys.exit('Unsuccessful platform jobs: ' + ', '.join(failed))
+          print('All disposable platform checks passed')
+          PY
