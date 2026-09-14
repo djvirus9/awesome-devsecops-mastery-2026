@@ -1,6 +1,7 @@
 # Awesome DevSecOps Mastery 2026
 
 [![Reference checks](https://github.com/djvirus9/awesome-devsecops-mastery-2026/actions/workflows/devsecops-golden-pipeline.yml/badge.svg)](https://github.com/djvirus9/awesome-devsecops-mastery-2026/actions/workflows/devsecops-golden-pipeline.yml)
+[![Platform checks](https://github.com/djvirus9/awesome-devsecops-mastery-2026/actions/workflows/platform-validation.yml/badge.svg)](https://github.com/djvirus9/awesome-devsecops-mastery-2026/actions/workflows/platform-validation.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 Learn DevSecOps by taking one small API from local checks through build evidence, deployment policy, detection, and incident recovery. This repository combines an executable local reference path with optional environment exercises and a curated resource library.
@@ -63,11 +64,11 @@ The [microservice capstone](projects/microservice-api/README.md) connects the ex
 - Learning: [docs](docs/README.md), [roadmap](docs/roadmap.md), [labs](labs/README.md), [skill maps](skill-maps/README.md), [project extensions](projects/README.md).
 - Implementation: [samples](samples/README.md), [CI examples](pipelines/), [configurations](configs/README.md), [policies](policies/README.md), [repository templates](repo-templates/README.md), [integrations](integrations/README.md), [recipes](recipes/README.md).
 - Operations: [control catalog](templates/control-catalog.md), [checklists](checklists/README.md), [SDLC checklists](sdlc-checklists/README.md), [playbooks](playbooks/README.md), [exceptions](templates/security-exception-template.md).
-- Evidence: [worked release record](evidence-packs/example-release.md), [metrics](docs/metrics.md), [datasets](metrics-templates/README.md), [dashboards](dashboards/README.md), [maturity rubric](scorecards/maturity-scorecard.md).
+- Evidence: [actual dated validation record](evidence-packs/releases/2026-09-15-reference-path.md), [illustrative release assessment](evidence-packs/example-release.md), [metrics](docs/metrics.md), [datasets](metrics-templates/README.md), [dashboards](dashboards/README.md), [maturity rubric](scorecards/maturity-scorecard.md).
 - References: [tool comparison](docs/tool-comparison.md), [catalog](docs/awesome-catalog.md), [cheatsheets](docs/cheatsheets.md), [glossary](docs/glossary.md), [illustrative scenarios](docs/case-studies.md).
 
 ## Contributing and maintenance
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md), run local checks, and include commands, supported versions, expected results, and limitations for a new example. Tool names alone do not establish a working control. The workflow badge links to execution evidence; optional cloud and cluster exercises require their own validation record.
+Read [CONTRIBUTING.md](CONTRIBUTING.md), run local checks, and include commands, supported versions, expected results, and limitations for a new example. Tool names alone do not establish a working control. The badges link to separate baseline and disposable-platform checks. The dated validation record identifies the tested source, environment, results, and remaining gaps; copying this repository does not reproduce its settings or execution evidence. Released-image admission/deployment needs its own signed-path run; GitLab, Argo CD/Flux, cloud, and host-sensor paths are not implied by the GitHub baseline.
 
 The 2026 edition is a rolling learning resource. Record tool upgrades and validation changes in pull requests; see the [validation and release criteria](docs/validation.md). Report security issues through [SECURITY.md](SECURITY.md). Distributed under the [MIT License](LICENSE).
