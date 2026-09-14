@@ -55,6 +55,8 @@ Item ownership is decided on the server; callers cannot select another owner usi
 
 Docker is optional until this stage. The [Dockerfile](Dockerfile) uses a digest-pinned Python base, hash-locked runtime dependencies, non-root UID/GID 10001, and Gunicorn bound to port 8080 inside the container. Binding inside the container is separate from exposing a host port.
 
+The runtime uses Alpine 3.24 (musl), with an explicit `libuuid=2.42.3-r1` security update because the pinned base predates that package release. Runtime dependencies install only from hash-verified wheels; the lock includes CPython 3.12 musllinux wheels for amd64 and arm64. Review package availability, compatibility, and the image scan whenever changing the base or lock. See the [base-image validation record](../../docs/validation.md#container-base-selection).
+
 ```bash
 make container
 make container-test

@@ -1,4 +1,4 @@
-FROM python:3.12-slim-bookworm@sha256:782412e85d0f0984994c290652577d4018aff08145c85b262bb63dc0c7522254
+FROM python:3.12-alpine3.24@sha256:b64631e04e4920160c50fbe8d8df828f7f35f06f425cb44aa09bca53e708a35a
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -6,9 +6,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 COPY requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir --require-hashes -r requirements.txt \
-    && groupadd --gid 10001 app \
-    && useradd --uid 10001 --gid app --no-create-home --shell /usr/sbin/nologin app
+# The published base predates this Alpine security update. Keep the package pin
+# reviewed alongside the base digest; do not suppress the image vulnerability gate.
+RUN apk add --no-cache 'libuuid=2.42.3-r1' \
+    && pip install --no-cache-dir --only-binary=:all: --require-hashes -r requirements.txt \
+    && addgroup -S -g 10001 app \
+    && adduser -S -D -H -u 10001 -G app -s /sbin/nologin app
 COPY --chown=10001:10001 app.py ./app.py
 USER 10001:10001
 EXPOSE 8080
