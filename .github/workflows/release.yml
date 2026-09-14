@@ -81,7 +81,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           IMAGE_REFERENCE: ${{ steps.image.outputs.reference }}
-        run: gh attestation verify "oci://$IMAGE_REFERENCE" --repo "$GITHUB_REPOSITORY" --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release.yml" --source-digest "$GITHUB_SHA" --source-ref refs/heads/main --cert-identity "$EXPECTED_IDENTITY" --deny-self-hosted-runners --format json > reports/provenance-verification.json
+        run: python3 scripts/verify_release.py --image-reference "$IMAGE_REFERENCE" --repository "$GITHUB_REPOSITORY" --source-commit "$GITHUB_SHA"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
