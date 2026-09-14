@@ -9,14 +9,15 @@ Finish with evidence that compliant workloads pass, risky settings identify the 
 Run from the repository root:
 
 ```bash
+make setup
 python3 scripts/install_tool.py kyverno
 python3 scripts/install_tool.py gator
 PATH="$PWD/.tools/bin:$PATH" bash policies/verify.sh
 ```
 
-Expected: 118 Kyverno assertions, seven Gator cases, and 12 direct policy evaluations of the actual reference Deployment and network-check Jobs pass. The suite includes positive and negative regular/init/ephemeral-container fixtures, nested workload templates, and active/expired exception cases. A negative fixture is expected to fail policy evaluation and therefore pass its regression test.
+Expected: 117 Kyverno assertions, nine generated deadline-guard cases, seven Gator cases, and 12 direct policy evaluations of the actual reference Deployment and network-check Jobs pass. The suite includes positive and negative regular/init/ephemeral-container fixtures, nested workload templates, and narrow exception scope. Native `expiresAt` is not sufficient for expiry in this pinned version; the guard's live transition is verified only by the mandatory exercise below. A negative fixture is expected to fail policy evaluation and therefore pass its regression test.
 
-This offline step is verified in repository checks. The live steps below require Docker and have not been executed during this repository update. Dry-run admission checks do not start Pods.
+This offline step is verified in repository checks. The live steps below require Docker; their automated Linux amd64 equivalent is [the disposable-cluster harness](../../projects/k8s-gitops/README.md#automated-disposable-cluster-validation). Consult platform workflow evidence for actual integration status. Dry-run admission checks do not start Pods.
 
 ## 2. Install and observe in audit mode
 
@@ -32,6 +33,7 @@ helm upgrade --install kyverno kyverno/kyverno --version 3.9.1 \
   --set features.policyExceptions.enabled=true \
   --set features.policyExceptions.namespace=policy-exceptions \
   --wait --timeout 5m
+kubectl --context kind-devsecops-reference apply -f projects/k8s-gitops/kyverno-report-rbac.yaml
 kubectl --context kind-devsecops-reference apply \
   -f policies/kyverno/require-non-root.yaml \
   -f policies/kyverno/disallow-privileged.yaml \
@@ -40,14 +42,14 @@ kubectl --context kind-devsecops-reference apply \
 kubectl --context kind-devsecops-reference get validatingpolicies
 ```
 
-Wait for the policies' `READY` column to show true. The policy files use `Audit` and `Warn`; evaluation errors use `failurePolicy: Fail`. Check audit warnings with server dry runs:
+Wait for the policies' `READY` column (`status.conditionStatus.ready`) to show true; these policies do not expose a standard `Ready` condition. The supplemental RBAC grants only the Kyverno reports controller read access to the matched `pods/ephemeralcontainers` subresource, as required by its permission check; the sample app gains no permissions. The policy files use `Audit` and `Warn`; evaluation errors use `failurePolicy: Fail`. Check audit warnings with server dry runs:
 
 ```bash
 kubectl --context kind-devsecops-reference apply --dry-run=server -f policies/fixtures/good.yaml
 kubectl --context kind-devsecops-reference apply --dry-run=server -f policies/fixtures/privileged.yaml
 ```
 
-Both dry runs should be allowed in audit mode. The second must include the privileged-mode warning. Record the policy name, object, and message. No noncompliant Pod is created. Now complete the project's **Deploy the reference app** section, confirm `/health`, and inspect persisted policy results:
+Both dry runs should be allowed in audit mode. The second must include the privileged-mode warning. Its `allowPrivilegeEscalation: true` is necessary for an API-valid privileged fixture, so `restrict-workload` also warns; Kubernetes rejects `privileged: true` combined with escalation set to false before policy evaluation. Record the policy names, object, and messages. No noncompliant Pod is created. Now complete the project's **Deploy the reference app** section, confirm `/health`, and inspect persisted policy results:
 
 ```bash
 kubectl --context kind-devsecops-reference -n devsecops-reference get policyreports -o yaml
@@ -65,7 +67,7 @@ kubectl --context kind-devsecops-reference apply --dry-run=server -f policies/fi
 kubectl --context kind-devsecops-reference apply --dry-run=server -f policies/fixtures/missing-limits.yaml
 ```
 
-The compliant object should pass. Each remaining command should exit nonzero and identify `disallow-privileged`, `require-non-root`, or `require-resource-limits`, respectively. Check the actual policy message: an unavailable webhook or malformed manifest is not evidence that the intended control blocked it. Existing Pods are not evicted by switching to Deny; correct them and roll out the change explicitly.
+The compliant object should pass. Each remaining command should exit nonzero and identify `disallow-privileged` (also `restrict-workload`), `require-non-root`, or `require-resource-limits`, respectively. Check the actual policy message: an unavailable webhook or malformed manifest is not evidence that the intended control blocked it. Existing Pods are not evicted by switching to Deny; correct them and roll out the change explicitly.
 
 To return to the starting mode:
 
@@ -77,29 +79,48 @@ Switch back to enforcement before continuing. The helper mutates only the four n
 
 ## 4. Exercise a narrowly scoped, expiring exception
 
-The only exception is for the `missing-limits` Pod in `devsecops-reference`, and only for the limits policy. Other objects and all other controls remain evaluated. The test Pod is never started.
+The only exception is for the `missing-limits` Pod in `devsecops-reference`, and only for the limits policy. Other objects and all other controls remain evaluated. The test Pod is never started. Kyverno 1.19.1 can retain a cached exception past native `expiresAt`, so a separate **per-admission deadline guard** is required. It derives the original limits checks and covers normal Pod admissions plus ephemeral-container updates. Do not rely on automatic deletion or add unsupported `time.now()` to the PolicyException itself.
 
 ```bash
-python3 policies/render-exception.py --minutes 1 --ticket LAB-04 \
+exception_dir="$(mktemp -d)"
+.venv/bin/python policies/render-exception.py --minutes 5 --ticket LAB-04 \
   --approver local-lab-owner --reason 'Demonstrate expiration using server dry runs' \
-  > /tmp/devsecops-reference-exception.json
+  > "$exception_dir/exception.json"
+.venv/bin/python policies/render-exception.py --guard-for "$exception_dir/exception.json" \
+  > "$exception_dir/deadline-guard.json"
 ```
 
-Inspect the JSON and its exact deadline, scope, and recorded approver. In an organization, obtain the actual approval before applying; metadata alone does not verify it. Only the local cluster operator has access to the dedicated exception namespace; the sample app receives no API privileges.
+Inspect both JSON documents and their identical deadline, exact scope, and recorded approver. In an organization, obtain the actual approval before applying; metadata alone does not verify it. Only the local cluster operator can edit these resources; the sample app receives no API privileges. Install the guard and wait for readiness **before** granting the exception:
 
 ```bash
-kubectl --context kind-devsecops-reference apply -f /tmp/devsecops-reference-exception.json
+kubectl --context kind-devsecops-reference apply -f "$exception_dir/deadline-guard.json"
+kubectl --context kind-devsecops-reference wait \
+  --for=jsonpath='{.status.conditionStatus.ready}'=true \
+  validatingpolicy/reference-limits-deadline --timeout=120s
+kubectl --context kind-devsecops-reference apply -f "$exception_dir/exception.json"
 kubectl --context kind-devsecops-reference apply --dry-run=server -f policies/fixtures/missing-limits.yaml
 kubectl --context kind-devsecops-reference apply --dry-run=server -f policies/fixtures/init-missing-limits.yaml
 ```
 
-The exact Pod should now pass after the exception is reconciled. The init-container case must still fail because it has a different name. After the recorded deadline passes, repeat the `missing-limits.yaml` dry run: it must fail again. Both the `expiresAt` field and a CEL server-clock condition carry that deadline, so enforcement does not depend on deleting the exception on time. Clock synchronization matters. Expiration affects later admissions; it does not stop a running object.
+The exact Pod should now pass after the exception is reconciled. The init-container case must still fail because it has a different name. After the recorded deadline passes, repeat the `missing-limits.yaml` dry run: it must fail naming **`reference-limits-deadline`**, before any deletion or refresh. Confirm that the exception still exists. Then prove the same-name Pod passes when its limits are corrected:
+
+```bash
+kubectl --context kind-devsecops-reference -n policy-exceptions get \
+  policyexception.policies.kyverno.io reference-limits-exercise -o yaml
+.venv/bin/python -c 'import json, yaml; obj=yaml.safe_load(open("policies/fixtures/good.yaml")); obj["metadata"]["name"]="missing-limits"; print(json.dumps(obj))' \
+  | kubectl --context kind-devsecops-reference apply --dry-run=server -f -
+```
+
+Revoke the exception, repeat the negative dry run and require **`require-resource-limits`** in its denial, then remove the guard. Do not remove the guard if the original control has not resumed enforcement:
 
 ```bash
 kubectl --context kind-devsecops-reference -n policy-exceptions delete policyexception.policies.kyverno.io reference-limits-exercise
+kubectl --context kind-devsecops-reference apply --dry-run=server -f policies/fixtures/missing-limits.yaml
+# Only after the previous denial names require-resource-limits:
+kubectl --context kind-devsecops-reference delete validatingpolicy reference-limits-deadline
 ```
 
-Keep the reviewed record and before/after command outcomes as evidence. The checked-in test exception with a 2099 timestamp is **only an offline fixture**; use the renderer's bounded lifetime for this exercise.
+Keep the reviewed records and before/after command outcomes as evidence. Clock synchronization and webhook availability matter. The guard controls later admissions; it does not stop an already-running object. Passing offline cases are not evidence of the live deadline transition; require a successful platform run. The checked-in test exception with a 2099 timestamp is **only an offline fixture**; use the renderer's bounded lifetime for this exercise.
 
 ## 5. Complete the deployment checks and handoff
 
@@ -107,6 +128,6 @@ Run the project's **network boundary**, **drift**, and **rollback** exercises. R
 
 For troubleshooting, first inspect the named policy status and webhook Pods, then the exact container fields. In `Audit` mode, admission is deliberately allowed. In `Deny` mode, evaluate missing limits separately from non-root inheritance and privileged mode. Do not recursively apply `policies/` because it contains noncompliant fixtures.
 
-Cleanup is `kind delete cluster --name devsecops-reference`, which deletes only this disposable cluster and its in-memory application data. Remove the reviewed temporary exception file when it is no longer needed.
+Cleanup is `kind delete cluster --name devsecops-reference`, which deletes only this disposable cluster and its in-memory application data. Remove the two reviewed temporary JSON files when they are no longer needed.
 
 The [Gatekeeper alternative](../../policies/opa/README.md) has complete templates and offline cases but covers a smaller control set. [Signed-image admission](../../projects/k8s-gitops/README.md#signed-release-extension) requires a released image, a separate policy-controller installation, namespace opt-in, and additional live verification.

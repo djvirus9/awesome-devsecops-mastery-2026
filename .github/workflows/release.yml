@@ -66,7 +66,7 @@ jobs:
           IMAGE_REFERENCE: ${{ steps.image.outputs.reference }}
         run: |
           .tools/bin/syft --config configs/syft.yaml "registry:$IMAGE_REFERENCE" -o cyclonedx-json=reports/sbom.cdx.json
-          .tools/bin/cosign sign --yes "$IMAGE_REFERENCE"
+          .tools/bin/cosign sign --yes --bundle reports/image.sigstore.json "$IMAGE_REFERENCE"
           .tools/bin/cosign verify --certificate-identity "$EXPECTED_IDENTITY" --certificate-oidc-issuer https://token.actions.githubusercontent.com "$IMAGE_REFERENCE" > reports/image-verification.json
           .tools/bin/cosign sign-blob --yes --bundle reports/sbom.sigstore.json reports/sbom.cdx.json
           .tools/bin/cosign verify-blob --bundle reports/sbom.sigstore.json --certificate-identity "$EXPECTED_IDENTITY" --certificate-oidc-issuer https://token.actions.githubusercontent.com reports/sbom.cdx.json

@@ -200,7 +200,7 @@ results:
     kind: "Pod"
     resources:
       - "privileged"
-    result: "pass"
+    result: "fail"
   -
     isValidatingPolicy: true
     policy: "require-non-root"
@@ -228,7 +228,7 @@ results:
     kind: "Pod"
     resources:
       - "init-privileged"
-    result: "pass"
+    result: "fail"
   -
     isValidatingPolicy: true
     policy: "require-non-root"
@@ -256,7 +256,7 @@ results:
     kind: "Pod"
     resources:
       - "ephemeral-privileged"
-    result: "pass"
+    result: "fail"
   -
     isValidatingPolicy: true
     policy: "require-non-root"

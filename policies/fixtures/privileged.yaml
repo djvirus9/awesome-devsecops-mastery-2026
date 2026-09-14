@@ -17,7 +17,8 @@ spec:
       name: "sample-api"
       image: "devsecops-reference:local"
       securityContext:
-        allowPrivilegeEscalation: false
+        # Kubernetes rejects privileged=true combined with escalation=false.
+        allowPrivilegeEscalation: true
         readOnlyRootFilesystem: true
         capabilities:
           drop:

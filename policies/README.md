@@ -10,6 +10,7 @@ Executable, namespace-scoped teaching controls for the [reference application](.
 From the repository root, install the pinned official CLIs and run the fixtures:
 
 ```bash
+make setup
 python3 scripts/install_tool.py kyverno
 python3 scripts/install_tool.py gator
 PATH="$PWD/.tools/bin:$PATH" bash policies/verify.sh
@@ -17,7 +18,9 @@ PATH="$PWD/.tools/bin:$PATH" bash policies/verify.sh
 
 Supported policy tool versions: **Kyverno 1.19.1** and **Gatekeeper/Gator 3.23.1**. `verify.sh` rejects other versions. `KYVERNO_BIN` and `GATOR_BIN` can select an existing installation. No network or cluster is used during fixture evaluation.
 
-The suite checks 118 Kyverno expectations, seven Gatekeeper cases, and all four Kyverno controls against the actual reference Deployment and both network-check Jobs (12 direct evaluations). It covers non-root inheritance and overrides, regular/init/ephemeral containers, omitted and zero limits, host namespaces, hostPath, capabilities, filesystem protections, token mounting, namespace boundaries, workload templates, and narrow active/expired exceptions. A negative fixture **passing its test** means the policy correctly rejected it.
+The suite checks 117 Kyverno expectations, nine generated deadline-guard cases, seven Gatekeeper cases, and all four Kyverno controls against the actual reference Deployment and both network-check Jobs (12 direct evaluations). It covers non-root inheritance and overrides, regular/init/ephemeral containers, omitted and zero limits, host namespaces, hostPath, capabilities, filesystem protections, token mounting, namespace boundaries, workload templates, and narrow exception scope. `make setup` supplies the hash-locked Python dependencies for the generated guard tests; `PYTHON_BIN` can select another prepared interpreter. A negative fixture **passing its test** means the policy correctly rejected it.
+
+Native `expiresAt` is not a sufficient deadline enforcement mechanism in the pinned version. The lab requires a separate, exact-object admission guard derived from the original limits policy. Offline tests evaluate its before/after branches; the live harness must additionally prove deadline transition without deleting or refreshing the exception first. See [the exception design and version limitations](kyverno/README.md#expiring-exception-exercise).
 
 `fixtures/` and the exceptions under `kyverno/tests/` are offline test inputs, including deliberately noncompliant objects. Do not recursively apply this directory to Kubernetes. Apply only the named policy files in [Lab 04](../labs/lab-04-k8s-admission-policies/README.md).
 

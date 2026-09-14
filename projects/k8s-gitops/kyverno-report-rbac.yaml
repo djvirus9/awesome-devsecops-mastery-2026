@@ -1,0 +1,25 @@
+# Kyverno 1.19.1 checks get/list/watch access for every matched resource,
+# including subresources. Its report watcher still observes the parent Pod.
+# Keep ephemeral-container admission matching; grant no write/API access to
+# the sample app and do not modify Helm's managed ClusterRole.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: reference-kyverno-ephemeral-report-read
+rules:
+  - apiGroups: [""]
+    resources: [pods/ephemeralcontainers]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: reference-kyverno-ephemeral-report-read
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: reference-kyverno-ephemeral-report-read
+subjects:
+  - kind: ServiceAccount
+    name: kyverno-reports-controller
+    namespace: kyverno

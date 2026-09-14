@@ -13,6 +13,8 @@ gator_bin="${GATOR_BIN:-gator}"
   exit 1
 }
 "$kyverno_bin" test "$policy_root/kyverno/tests" --fail-only
+policy_python="${PYTHON_BIN:-$policy_root/../.venv/bin/python}"
+"$policy_python" "$policy_root/test-deadline-guard.py" "$kyverno_bin"
 "$gator_bin" verify "$policy_root/opa/tests/suite.yaml"
 "$kyverno_bin" apply "$policy_root/kyverno/require-non-root.yaml" \
   "$policy_root/kyverno/disallow-privileged.yaml" \
