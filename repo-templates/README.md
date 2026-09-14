@@ -1,6 +1,6 @@
 # Repository templates
 
-Generate a complete, consistent copy of the local reference using [scripts/bootstrap_template.py](../scripts/bootstrap_template.py). All three profiles share the canonical application, configuration, tests, and local workflow definitions. Profiles select a follow-on guide; they do not maintain divergent copies of CI or create provider resources.
+Generate a complete, consistent copy of the local reference using [scripts/bootstrap_template.py](../scripts/bootstrap_template.py). All three profiles share the canonical application, configuration, tests, and GitHub workflow definitions. Profiles select a follow-on guide; they do not maintain divergent copies of CI or create provider resources.
 
 ## Create a fresh practice repository directory
 
@@ -23,13 +23,14 @@ The dry run validates required source files and reports the copy plan without cr
 my-devsecops-reference/
 ├── .github/workflows/
 │   ├── devsecops-golden-pipeline.yml
+│   ├── platform-validation.yml
 │   └── release.yml
 ├── .pre-commit-config.yaml
 ├── .python-version
 ├── Makefile
 ├── requirements-dev.in / requirements-dev.txt
 ├── tool-versions.json
-├── scripts/                 # same helpers used by the copied workflow
+├── scripts/                 # same helpers used by the copied workflows
 ├── configs/                 # selected source, scanner, and signing configuration
 ├── samples/sample-api/      # application, contract, locks, and Dockerfile
 ├── tests/                   # application and supporting regressions
@@ -52,9 +53,9 @@ The workflow files are copied locally with their dependencies; no mutable remote
 
 ## Review before publishing
 
-Read `TEMPLATE-SETUP.md`. Review inherited CODEOWNERS, security/contact routes, upstream documentation links, repository/ref identities in trust policies, manual publishing permissions, and intended project scope. The release workflow is copied but is an optional operation; no release is triggered by generation. Configure required checks in your own repository after observing the actual check names/results.
+Read `TEMPLATE-SETUP.md`. Review inherited CODEOWNERS, security/contact routes, upstream documentation links, repository/ref identities in trust policies, manual publishing permissions, and intended project scope. After publishing the copy to GitHub with Actions enabled, the baseline and platform workflows run on their configured PR/main events, including disposable container/cluster workloads. Generation itself starts none. The release workflow remains an optional, manually activated operation requiring identity, registry, and permission review. Configure required checks in your own repository after observing the actual check names/results. The upstream [dated validation record](../evidence-packs/releases/2026-09-15-reference-path.md) describes upstream execution, not validation of a generated copy.
 
-Legacy `ci.yml` paths in profile directories remain compatibility notices. They are not runnable workflows and must not be copied into `.github/workflows/`. The generator installs the canonical workflow at its correct path.
+Legacy `ci.yml` paths in profile directories remain compatibility notices. They are not runnable workflows and must not be copied into `.github/workflows/`. The generator installs the canonical workflows at their correct paths.
 
 The legacy `microservice/.pre-commit-config.yaml` is also a compatibility notice. Install hooks from the generated repository's root `.pre-commit-config.yaml`, which is copied from the canonical root configuration.
 

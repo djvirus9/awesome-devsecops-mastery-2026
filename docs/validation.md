@@ -30,6 +30,10 @@ Local defaults do not create a cloud service, publish a registry image, install 
 
 ## Recorded validation versus intended support
 
+The [actual 15 September 2026 reference-path record](../evidence-packs/releases/2026-09-15-reference-path.md) identifies the merged source, main-branch baseline and disposable Kubernetes/Grafana results, exact published image digest, independently checked signature/provenance evidence, template-copy results and remaining scope. It is separate from the fictional worked assessment. Follow its per-path status rather than treating the presence of a workflow or a green default platform run as proof of released-image admission.
+
+The snapshots below describe earlier implementation checkpoints and are retained as history; their test counts and image results are not the latest release identity.
+
 The runtime exercise was executed with Python 3.14.7 during the September 2026 content update: all 13 detector tests passed, and the supplied fixture at `2026-09-15T12:04:00Z` yielded the expected two alerts. The support matrix above is a reproducible contract, not a blanket claim that every platform was tested in that editing environment.
 
 The separated Python/JavaScript source rules were tested with Semgrep 1.177.0: both annotated fixture suites passed, the deliberate Python fixture produced one finding and exit 1, and the normal sample scan returned no findings. The template generator's eight behavior tests also passed with Python 3.14.7.
@@ -50,7 +54,7 @@ The GitLab adaptation separately uses a digest-pinned Debian Trixie job image fo
 
 ## Repository settings
 
-On 15 September 2026, private vulnerability reporting was enabled and `main` protection was configured to require a PR, resolved review conversations, an up-to-date branch, and both `Required checks` and `Platform checks` from the GitHub Actions app. After the latter was made required, [PR #285](https://github.com/djvirus9/awesome-devsecops-mastery-2026/pull/285) at `e385e65911eef9ba8cb12487fe7aac56a3847f83` was observed as `BLOCKED` with a failed platform result. No administrative bypass was used. Force pushes and branch deletion are disabled for the normal protected path. Mandatory approving-review count is zero for this single-maintainer setup; independent review is not enforced. Administrators retain an explicit maintenance override. Add appropriate reviewer requirements when another maintainer can review, and record any override rather than treating it as a successful security gate. These are observed settings for the upstream repository, not settings automatically installed by copying the template.
+On 15 September 2026, private vulnerability reporting was enabled and `main` protection was configured to require a PR, resolved review conversations, an up-to-date branch, and both `Required checks` and `Platform checks` from the GitHub Actions app. After the latter was made required, [PR #285](https://github.com/djvirus9/awesome-devsecops-mastery-2026/pull/285) was observed as `BLOCKED` with a failed platform result. It later merged normally after both required checks passed at head `aed80f4273d28e33224e943734066560c3adc71f`; the resulting main source was validated separately. No administrative bypass was used. Force pushes and branch deletion are disabled for the normal protected path. Mandatory approving-review count is zero for this single-maintainer setup; independent review is not enforced. Administrators retain an explicit maintenance override. Add appropriate reviewer requirements when another maintainer can review, and record any override rather than treating it as a successful security gate. These are observed settings for the upstream repository, not settings automatically installed by copying the template.
 
 ## Evidence and maintenance
 

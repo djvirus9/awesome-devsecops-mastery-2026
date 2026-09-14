@@ -2,13 +2,13 @@
 
 Deploy the same [sample API](../../samples/sample-api/README.md) into a dedicated local Kind cluster, evaluate admission controls, exercise a network boundary, and recover a failed rollout. Allow 60–90 minutes and roughly 6 GiB of available Docker memory.
 
-Implemented: Kustomize manifests, hardened runtime settings, namespace-scoped admission policies, local secret delivery, network controls, an executable network check, and manual drift/rollback exercises. Argo CD/Flux reconciliation, production approval routing, and an automatically verified GitOps promotion controller remain extensions. A directory of manifests alone is not a running GitOps system.
+Implemented: Kustomize manifests, hardened runtime settings, namespace-scoped admission policies, local secret delivery, network controls, an executable network check, and manual/automated drift and rollback exercises. Argo CD/Flux reconciliation, production approval routing, and an automatically verified GitOps promotion controller remain extensions. A directory of manifests alone is not a running GitOps system.
 
 ## Supported setup and verification status
 
 The documented combination is Kind **0.33.0**, Kubernetes/kubectl **1.35.8**, Helm **3.22.0**, Cilium **1.20.1**, and Kyverno **1.19.1** (Helm chart **3.9.1**). The Kind node image is pinned by digest in `kind.yaml`. Use Docker Desktop on macOS or Docker Engine on Linux and repository Python tooling. `python3 scripts/install_tool.py kind helm kubectl` installs checksum-pinned clients into `.tools/bin`; prepend that directory to PATH. Helm 3 migration is due before its [February 10, 2027 security-support end](https://helm.sh/blog/helm-v3-end-of-life).
 
-The manifests and policy fixtures have been checked offline. Cluster/CNI/signature integration results require the separate platform-validation workflow; do not infer them from an offline policy pass. The local Docker daemon was unavailable during implementation.
+Offline policy fixtures and hosted Linux amd64 disposable-cluster checks have been exercised. The [dated validation record](../../evidence-packs/releases/2026-09-15-reference-path.md) identifies the exact source and baseline/platform runs, including observed admission, ingress-network, and rollback behavior. This is single-node learning-environment evidence, not production readiness or Argo CD/Flux reconciliation. Signed-image admission/deployment requires a separate recorded run and is not inferred from the offline or unsigned local-image path.
 
 ## Automated disposable-cluster validation
 
@@ -23,6 +23,8 @@ bash projects/k8s-gitops/validate-live.sh
 The harness refuses an existing `devsecops-reference` cluster or labelled orphaned nodes. It uses fresh temporary Kubernetes/Helm configuration, permits only a local Unix-socket Docker endpoint, creates the named cluster, and records JSON results and command evidence in a new `reports/k8s/` run directory. It tests API-valid Audit warnings, Deny controls, one-minute exception deadline enforcement, health/authentication/ownership, runtime hardening/RBAC, both ingress NetworkPolicy Jobs, drift, and rollback. The exception requires a separate exact-object admission guard: native `expiresAt` alone does not reliably revoke cached exceptions in this Kyverno version. The harness proves guard-specific denial while the exception still exists, corrected same-name acceptance, and restoration of the original policy before guard cleanup. See [Lab 04](../../labs/lab-04-k8s-admission-policies/README.md#4-exercise-a-narrowly-scoped-expiring-exception). Noncompliant Pods are **only server dry runs**. It deletes the successfully created cluster on normal completion, failure, or handled termination. A hard-killed process cannot clean up; an interrupted partial creation is explicitly reported for disposal with the dedicated runner, not silently claimed as cleaned up.
 
 An optional `IMAGE_REFERENCE` must be an exact `ghcr.io/djvirus9/awesome-devsecops-mastery-2026/sample-api@sha256:...` digest from a successful release. This adds provenance admission, a deliberately wrong expected-identity denial, unmatched-image denial, and a real released-image rollout. Private GHCR access uses optional `REGISTRY_TOKEN`/`REGISTRY_USER` provided by the workflow: the pull Secret and registry credential file exist only in the disposable namespace/temp directory and are excluded from reports. The harness never publishes or signs an image. Its ingress checks do not dynamically prove egress denial; it does not publish an unsigned same-repository fixture or claim that negative test. See the [platform validation workflow](../../.github/workflows/platform-validation.yml) for current run evidence.
+
+A normal PR run without `IMAGE_REFERENCE` does not validate released-image provenance admission or deployment. Those claims require the separately recorded signed-image run for the exact supplied digest.
 
 ## Create the local cluster
 
