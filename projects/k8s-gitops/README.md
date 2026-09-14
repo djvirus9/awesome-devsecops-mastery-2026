@@ -6,9 +6,23 @@ Implemented: Kustomize manifests, hardened runtime settings, namespace-scoped ad
 
 ## Supported setup and verification status
 
-The documented combination is Kind **0.33.0**, Kubernetes **1.35.8**, Cilium **1.20.1**, Kyverno **1.19.1** (Helm chart **3.9.1**), and kubectl **1.35.x**. The Kind node image is pinned by digest in `kind.yaml`. Use Docker Desktop on macOS or Docker Engine on Linux, Helm, and repository Python tooling. Install tools using their official release instructions.
+The documented combination is Kind **0.33.0**, Kubernetes/kubectl **1.35.8**, Helm **3.22.0**, Cilium **1.20.1**, and Kyverno **1.19.1** (Helm chart **3.9.1**). The Kind node image is pinned by digest in `kind.yaml`. Use Docker Desktop on macOS or Docker Engine on Linux and repository Python tooling. `python3 scripts/install_tool.py kind helm kubectl` installs checksum-pinned clients into `.tools/bin`; prepend that directory to PATH. Helm 3 migration is due before its [February 10, 2027 security-support end](https://helm.sh/blog/helm-v3-end-of-life).
 
-The manifests and policy fixtures have been checked offline. The cluster/CNI/signature integration commands have **not** been executed during repository maintenance because the Docker daemon was unavailable. Completing the commands below supplies that integration evidence; do not infer it from an offline policy pass.
+The manifests and policy fixtures have been checked offline. Cluster/CNI/signature integration results require the separate platform-validation workflow; do not infer them from an offline policy pass. The local Docker daemon was unavailable during implementation.
+
+## Automated disposable-cluster validation
+
+On a dedicated **Linux amd64** Docker runner, from the repository root:
+
+```bash
+make setup
+python3 scripts/install_tool.py kind helm kubectl cosign
+bash projects/k8s-gitops/validate-live.sh
+```
+
+The harness refuses an existing `devsecops-reference` cluster or labelled orphaned nodes. It uses fresh temporary Kubernetes/Helm configuration, permits only a local Unix-socket Docker endpoint, creates the named cluster, and records JSON results and command evidence in a new `reports/k8s/` run directory. It tests API-valid Audit warnings, Deny controls, one-minute exception expiry, health/authentication/ownership, runtime hardening/RBAC, both ingress NetworkPolicy Jobs, drift, and rollback. Noncompliant Pods are **only server dry runs**. It deletes the successfully created cluster on normal completion, failure, or handled termination. A hard-killed process cannot clean up; an interrupted partial creation is explicitly reported for disposal with the dedicated runner, not silently claimed as cleaned up.
+
+An optional `IMAGE_REFERENCE` must be an exact `ghcr.io/djvirus9/awesome-devsecops-mastery-2026/sample-api@sha256:...` digest from a successful release. This adds provenance admission, a deliberately wrong expected-identity denial, unmatched-image denial, and a real released-image rollout. Private GHCR access uses optional `REGISTRY_TOKEN`/`REGISTRY_USER` provided by the workflow: the pull Secret and registry credential file exist only in the disposable namespace/temp directory and are excluded from reports. The harness never publishes or signs an image. Its ingress checks do not dynamically prove egress denial; it does not publish an unsigned same-repository fixture or claim that negative test. See the [platform validation workflow](../../.github/workflows/platform-validation.yml) for current run evidence.
 
 ## Create the local cluster
 
@@ -87,9 +101,9 @@ The last diff should be empty (exit 0), and `/health` should succeed again. Reco
 
 The checked-in `devsecops-reference:local` image is intentionally unsigned and never pulled. The repository's manually dispatched [release workflow](../../.github/workflows/release.yml) publishes `ghcr.io/djvirus9/awesome-devsecops-mastery-2026/sample-api` and signs its digest. After a successful release, verify that exact digest using the documented release verification command before changing a deployment.
 
-[The Sigstore policy](../../configs/cosign-policy.yaml) targets only that image repository and accepts only issuer `https://token.actions.githubusercontent.com` and the exact `release.yml@refs/heads/main` workflow identity. It does not accept every workflow from GitHub. It uses the v1beta1 API, with schema reference [policy-controller v0.15.1](https://github.com/sigstore/policy-controller/blob/v0.15.1/config/300-clusterimagepolicy.yaml).
+[The Sigstore policy](../../configs/cosign-policy.yaml), `require-reference-release-provenance`, requires a signed **SLSA v1 provenance bundle** for that image repository and accepts only issuer `https://token.actions.githubusercontent.com` and the exact `release.yml@refs/heads/main` workflow identity. It does not accept every workflow from GitHub. Cosign 3 plain-signature bundles are not implemented in the pinned controller's signature verification API; this policy intentionally uses its supported attestation path. It uses the v1beta1 API, with schema reference [policy-controller v0.15.1](https://github.com/sigstore/policy-controller/blob/v0.15.1/config/300-clusterimagepolicy.yaml).
 
-To implement admission verification as a further integration exercise, install policy-controller **0.15.1** using its [official installation guide](https://docs.sigstore.dev/policy-controller/installation/), apply the policy, and opt the dedicated namespace in with `policy.sigstore.dev/include=true`. Switch the manifest to the verified `@sha256:` image and `imagePullPolicy: IfNotPresent`. Check acceptance of the expected signer and rejection of unsigned or unexpected-signer images using server dry runs. Keep policy-controller's unmatched-image rejection behavior; adding a permissive catch-all policy weakens the boundary. The namespace opt-in, registry access, signature-format compatibility, and admission results require live verification and are not part of the completed offline tests.
+The automated signed path installs Helm chart **0.10.8**, whose default image is older, with an explicit **0.15.1** controller digest override, OCI1.1 discovery enabled, and unmatched-image behavior explicitly set to `deny`. The pin and exact arguments are in [the harness](validate_live.py). It applies the policy, opts only the dedicated namespace in with `policy.sigstore.dev/include=true`, and uses `imagePullPolicy: IfNotPresent` with the verified digest. Keep unmatched-image rejection; a permissive catch-all weakens this boundary. Namespace opt-in, registry access, signature-format compatibility, and admission results require a successful live workflow run. The current release builds Linux amd64; macOS arm64 learners should use the local image path rather than assuming release-image emulation.
 
 ## Troubleshooting and cleanup
 

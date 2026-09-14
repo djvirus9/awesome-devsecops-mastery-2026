@@ -16,7 +16,7 @@ PATH="$PWD/.tools/bin:$PATH" bash policies/verify.sh
 
 Expected: 118 Kyverno assertions, seven Gator cases, and 12 direct policy evaluations of the actual reference Deployment and network-check Jobs pass. The suite includes positive and negative regular/init/ephemeral-container fixtures, nested workload templates, and active/expired exception cases. A negative fixture is expected to fail policy evaluation and therefore pass its regression test.
 
-This offline step is verified in repository checks. The live steps below require Docker and have not been executed during this repository update. Dry-run admission checks do not start Pods.
+This offline step is verified in repository checks. The live steps below require Docker; their automated Linux amd64 equivalent is [the disposable-cluster harness](../../projects/k8s-gitops/README.md#automated-disposable-cluster-validation). Consult platform workflow evidence for actual integration status. Dry-run admission checks do not start Pods.
 
 ## 2. Install and observe in audit mode
 
@@ -47,7 +47,7 @@ kubectl --context kind-devsecops-reference apply --dry-run=server -f policies/fi
 kubectl --context kind-devsecops-reference apply --dry-run=server -f policies/fixtures/privileged.yaml
 ```
 
-Both dry runs should be allowed in audit mode. The second must include the privileged-mode warning. Record the policy name, object, and message. No noncompliant Pod is created. Now complete the project's **Deploy the reference app** section, confirm `/health`, and inspect persisted policy results:
+Both dry runs should be allowed in audit mode. The second must include the privileged-mode warning. Its `allowPrivilegeEscalation: true` is necessary for an API-valid privileged fixture, so `restrict-workload` also warns; Kubernetes rejects `privileged: true` combined with escalation set to false before policy evaluation. Record the policy names, object, and messages. No noncompliant Pod is created. Now complete the project's **Deploy the reference app** section, confirm `/health`, and inspect persisted policy results:
 
 ```bash
 kubectl --context kind-devsecops-reference -n devsecops-reference get policyreports -o yaml
@@ -65,7 +65,7 @@ kubectl --context kind-devsecops-reference apply --dry-run=server -f policies/fi
 kubectl --context kind-devsecops-reference apply --dry-run=server -f policies/fixtures/missing-limits.yaml
 ```
 
-The compliant object should pass. Each remaining command should exit nonzero and identify `disallow-privileged`, `require-non-root`, or `require-resource-limits`, respectively. Check the actual policy message: an unavailable webhook or malformed manifest is not evidence that the intended control blocked it. Existing Pods are not evicted by switching to Deny; correct them and roll out the change explicitly.
+The compliant object should pass. Each remaining command should exit nonzero and identify `disallow-privileged` (also `restrict-workload`), `require-non-root`, or `require-resource-limits`, respectively. Check the actual policy message: an unavailable webhook or malformed manifest is not evidence that the intended control blocked it. Existing Pods are not evicted by switching to Deny; correct them and roll out the change explicitly.
 
 To return to the starting mode:
 

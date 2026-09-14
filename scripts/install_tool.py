@@ -27,7 +27,10 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "tool-versions.json"
 PLATFORMS = {"linux-amd64", "darwin-arm64"}
-DOWNLOAD_HOSTS = {"github.com", "release-assets.githubusercontent.com", "objects.githubusercontent.com"}
+DOWNLOAD_HOSTS = {
+    "github.com", "release-assets.githubusercontent.com", "objects.githubusercontent.com",
+    "get.helm.sh", "dl.k8s.io", "cdn.dl.k8s.io",
+}
 MAX_DOWNLOAD = 512 * 1024 * 1024
 MAX_BINARY = 512 * 1024 * 1024
 MAX_EXPANDED = 768 * 1024 * 1024
@@ -38,6 +41,38 @@ def require_match(pattern, value, description):
     if not isinstance(value, str) or not re.fullmatch(pattern, value):
         raise ValueError(f"invalid {description}")
     return value
+
+
+def validate_archive_member(member):
+    # Exact POSIX names only: no normalization, traversal, absolute paths or
+    # archive-wide extraction. Helm places its binary one directory deep.
+    require_match(r"[A-Za-z0-9][A-Za-z0-9._-]*(?:/[A-Za-z0-9][A-Za-z0-9._-]*){0,3}", member, "archive member")
+    if len(member) > 256:
+        raise ValueError("archive member exceeds length limit")
+    return member
+
+
+def release_url(spec, pin, platform_name):
+    if "url" not in pin:
+        if spec["repository"] in {"helm/helm", "kubernetes/kubernetes"}:
+            raise ValueError("Helm and kubectl pins require an explicit official download URL")
+        return f"https://github.com/{spec['repository']}/releases/download/v{spec['version']}/{pin['asset']}"
+    # These two official distributions do not publish binaries as GitHub
+    # release assets. Keep overrides bound to their exact version/platform
+    # routes, rather than accepting an arbitrary URL on an approved host.
+    if spec["repository"] == "helm/helm":
+        asset = f"helm-v{spec['version']}-{platform_name}.tar.gz"
+        expected = f"https://get.helm.sh/{asset}"
+        member = f"{platform_name}/helm"
+    elif spec["repository"] == "kubernetes/kubernetes":
+        asset = "kubectl"
+        expected = f"https://dl.k8s.io/release/v{spec['version']}/bin/{platform_name.replace('-', '/')}/kubectl"
+        member = None
+    else:
+        raise ValueError("explicit download URLs are limited to official Helm and kubectl distributions")
+    if pin["url"] != expected or pin["asset"] != asset or pin["member"] != member:
+        raise ValueError("download URL, asset and member must match the pinned official version/platform")
+    return validate_url(pin["url"])
 
 
 def validate_manifest(manifest):
@@ -55,15 +90,17 @@ def validate_manifest(manifest):
         platforms = spec.get("platforms")
         if not isinstance(platforms, dict) or set(platforms) != PLATFORMS:
             raise ValueError("both supported platforms must have reviewed pins")
-        for pin in platforms.values():
-            if not isinstance(pin, dict) or set(pin) != {"asset", "sha256", "member"}:
-                raise ValueError("asset pins require asset, sha256 and member")
+        for platform_name, pin in platforms.items():
+            required = {"asset", "sha256", "member"}
+            if not isinstance(pin, dict) or not required <= set(pin) or set(pin) - required - {"url"}:
+                raise ValueError("asset pins require asset, sha256, member and only an optional url")
             asset = require_match(r"[A-Za-z0-9][A-Za-z0-9._-]*", pin["asset"], "asset name")
             require_match(r"[0-9a-f]{64}", pin["sha256"], "SHA256 pin")
             if pin["member"] is not None:
-                require_match(r"[A-Za-z0-9][A-Za-z0-9._-]*", pin["member"], "archive member")
+                validate_archive_member(pin["member"])
                 if not asset.endswith(".tar.gz"):
                     raise ValueError("only tar.gz archives are supported")
+            release_url(spec, pin, platform_name)
     return manifest
 
 
@@ -78,11 +115,13 @@ def native_platform():
 
 
 def validate_url(url):
+    if not isinstance(url, str) or len(url) > 4096 or re.search(r"[\x00-\x20\x7f]", url):
+        raise ValueError("invalid download URL")
     parsed = urlparse(url)
     if (parsed.scheme != "https" or parsed.hostname not in DOWNLOAD_HOSTS
             or parsed.username is not None or parsed.password is not None
             or parsed.port not in (None, 443) or parsed.fragment):
-        raise ValueError("download URL must use HTTPS on an approved GitHub release host")
+        raise ValueError("download URL must use HTTPS on an approved official release host")
     return url
 
 
@@ -119,6 +158,7 @@ def executable_bytes(source, member):
     if member is None:
         data = source.read(MAX_BINARY + 1)
     else:
+        validate_archive_member(member)
         with tarfile.open(fileobj=source, mode="r:gz") as archive:
             selected = []
             expanded = 0
@@ -180,7 +220,7 @@ def install(name, manifest, platform_name, root=ROOT):
         raise ValueError("unsupported platform")
     spec = manifest["tools"][name]
     pin = spec["platforms"][platform_name]
-    url = f"https://github.com/{spec['repository']}/releases/download/v{spec['version']}/{pin['asset']}"
+    url = release_url(spec, pin, platform_name)
     with tempfile.TemporaryFile() as source:
         download_asset(url, pin["sha256"], source)
         payload = executable_bytes(source, pin["member"])

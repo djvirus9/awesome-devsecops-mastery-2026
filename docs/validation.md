@@ -19,6 +19,7 @@ The [pinned binary installer](../scripts/install_tool.py) supports Linux amd64 a
 | Detection behavior | `make runtime-test` and Lab 05 replay | Python standard library | Threshold, grouping, deduplication, noise, and telemetry-gap cases pass. |
 | Metrics | `make metrics`; optional `make metrics-serve` | Python environment | Synthetic fixture calculations and the loopback exporter work. |
 | CI gates | [Reference workflow](../.github/workflows/devsecops-golden-pipeline.yml) | GitHub Actions runner/tool downloads | Named job behavior and retained artifacts for that exact run. |
+| Disposable platform integration | `make k8s-test` and `make dashboard-test`; [platform workflow](../.github/workflows/platform-validation.yml) | Linux amd64, local Docker, pinned Kubernetes tools for the cluster path | Actual admission/network/rollback behavior and dashboard API/render evidence. Inspect rendered PNGs separately before claiming visual acceptance. |
 | Merge enforcement | [Lab 02](../labs/lab-02-ci-pr-gates/README.md) | Practice repo with rule-management access | The configured merge path blocks a controlled failed check. |
 | Keyless signing | [Lab 03](../labs/lab-03-sbom-signing/README.md) | Cosign, network, chosen OIDC provider | A retained bundle verifies against the expected signer/issuer. |
 | Kubernetes admission | [Lab 04](../labs/lab-04-k8s-admission-policies/README.md) | Disposable supported cluster/controller | Actual admission and rollout behavior in the recorded environment. |

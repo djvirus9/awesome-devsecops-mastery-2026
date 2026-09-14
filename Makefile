@@ -3,7 +3,7 @@ VENV_PYTHON := .venv/bin/python
 IMAGE ?= devsecops-reference:local
 export PATH := $(CURDIR)/.tools/bin:$(PATH)
 
-.PHONY: setup test validate run container container-test sbom sast policy-test runtime-test metrics metrics-serve
+.PHONY: setup test validate run container container-test sbom sast policy-test runtime-test metrics metrics-serve dashboard-test k8s-test
 
 setup:
 	$(PYTHON) -m venv .venv
@@ -45,3 +45,9 @@ metrics:
 
 metrics-serve:
 	$(VENV_PYTHON) scripts/metrics.py --serve --port 9108
+
+dashboard-test:
+	$(PYTHON) scripts/validate_dashboard.py
+
+k8s-test:
+	bash projects/k8s-gitops/validate-live.sh

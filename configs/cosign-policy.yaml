@@ -1,13 +1,19 @@
 apiVersion: policy.sigstore.dev/v1beta1
 kind: ClusterImagePolicy
 metadata:
-  name: require-cosign-signature
+  name: require-reference-release-provenance
 spec:
   images:
     - glob: "ghcr.io/djvirus9/awesome-devsecops-mastery-2026/sample-api:*"
     - glob: "ghcr.io/djvirus9/awesome-devsecops-mastery-2026/sample-api@sha256:*"
   authorities:
-    - keyless:
+    # Cosign 3 plain-signature bundles are not accepted by this controller's
+    # signature API. Verify the release's signed SLSA v1 provenance bundle.
+    - signatureFormat: bundle
+      attestations:
+        - name: release-provenance
+          predicateType: https://slsa.dev/provenance/v1
+      keyless:
         url: "https://fulcio.sigstore.dev"
         identities:
           - issuer: "https://token.actions.githubusercontent.com"
