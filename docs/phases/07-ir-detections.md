@@ -1,28 +1,9 @@
-# Phase 07: IR and Detections
+# Phase 7: incident response and detection engineering
 
-## Goals
+Complete [Lab 07](../../labs/lab-07-ir-detections/README.md) using the synthetic alert report from Phase 6. Phase 7 is incident response; AI-assisted remediation is an [optional advanced specialization](../../skill-maps/advanced.md).
 
-- Establish repeatable incident response
-- Improve detection quality over time
+The exercise assigns commander, application owner, SRE, and scribe. Its injects distinguish stale client configuration from authorization regression, and service recovery from telemetry recovery. Preserve evidence, identify unknowns, weigh containment impact, and record reversible decisions.
 
-## Practices
+Definition of done: a completed incident record links evidence and timeline, documents acknowledgment/recovery clocks, shows required recovery checks, and assigns a corrective action with verification. A tabletop recovery is labeled simulated until a real practice environment supplies proof. Detections need positive, negative, boundary, and missing-source tests; tool installation alone is not detection engineering.
 
-- Detection-as-code
-- Incident runbooks and drills
-- Post-incident review and metrics
-
-## Tools
-
-- Detection rules: [Sigma](https://sigmahq.io/)
-- Threat models: [MITRE ATT&CK](https://attack.mitre.org/)
-- Case management: [TheHive](https://thehive-project.org/)
-
-## Deliverables
-
-- Runbooks and response checklists
-- Detection tuning log
-- Metrics dashboard for IR
-
-## Lab
-
-- [Lab 07: IR and Detections](../../labs/lab-07-ir-detections/README.md)
+Use the [playbooks](../../playbooks/README.md), [metric definitions](../metrics.md), [control catalog](../../templates/control-catalog.md), and [worked tabletop solution](../../labs/lab-07-ir-detections/solution.md). A threat-technique catalog such as [MITRE ATT&CK](https://attack.mitre.org/) can inform coverage discussions; it is not evidence of cause or attribution for an alert.

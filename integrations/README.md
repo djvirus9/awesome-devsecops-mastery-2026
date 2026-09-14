@@ -1,8 +1,7 @@
-# Integration Guides
+# CI platform integration guides
 
-Step-by-step setup guides for common CI/CD platforms.
+[GitHub Actions](github-actions.md) is the reference integration. [GitLab](gitlab-ci.md) includes a pipeline example; [Jenkins](jenkins.md) and [Azure DevOps](azure-devops.md) describe adaptation and acceptance criteria rather than claiming platform-tested implementations.
 
-- [GitHub Actions](github-actions.md)
-- [GitLab CI](gitlab-ci.md)
-- [Jenkins](jenkins.md)
-- [Azure DevOps](azure-devops.md)
+Every adoption must record runner/tool versions, trust/permission boundaries, expected checks, artifact locations, failed-check behavior and actual platform-run evidence. Local YAML or script validation is not proof of hosted-platform execution.
+
+Use [secure CI criteria](../templates/secure-ci-guidelines.md), [canonical controls](../templates/control-catalog.md) and the [evidence index](../evidence-packs/evidence-index.md).

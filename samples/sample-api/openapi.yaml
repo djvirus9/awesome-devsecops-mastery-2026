@@ -1,0 +1,72 @@
+openapi: 3.0.3
+info:
+  title: DevSecOps training API
+  version: 1.0.0
+  description: Read-only synthetic records; tokens are supplied explicitly through the environment.
+servers:
+  - url: http://127.0.0.1:8080
+paths:
+  /health:
+    get:
+      operationId: health
+      security: []
+      responses:
+        '200':
+          description: Process is available
+  /v1/items:
+    get:
+      operationId: listItems
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Only items belonging to the authenticated actor
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Item'
+        '401':
+          description: Missing or invalid bearer token
+  /v1/items/{item_id}:
+    get:
+      operationId: getItem
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: An item belonging to the authenticated actor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '401':
+          description: Missing or invalid bearer token
+        '404':
+          description: Item absent or not owned by this actor
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    Item:
+      type: object
+      additionalProperties: false
+      required: [id, name]
+      properties:
+        id:
+          type: string
+        name:
+          type: string

@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: sample-api-boundary
+  namespace: devsecops-reference
+spec:
+  podSelector:
+    matchLabels:
+      app: sample-api
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              access: sample-api
+      ports:
+        - protocol: TCP
+          port: 8080
+  # The in-memory API needs no DNS, database, or outbound Internet connectivity.
+  egress: []

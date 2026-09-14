@@ -1,39 +1,83 @@
-stages:
-  - test
+stages: [test, scan, sbom, sign]
 
-variables:
-  SEMGREP_RULES: p/ci
+# Use this file as the project-local CI configuration on GitLab.com.
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
+      when: never
+    - if: '$CI_COMMIT_BRANCH'
+
+default:
+  image: python:3.12-slim-bookworm@sha256:782412e85d0f0984994c290652577d4018aff08145c85b262bb63dc0c7522254
+  timeout: 20m
+
+quality:
+  stage: test
+  script:
+    - python -m pip install --require-hashes -r requirements-dev.txt
+    - python -m unittest discover -s tests -p 'test_*.py'
+    - python -m unittest discover -s repo-templates -p 'test_*.py'
+    - python -m unittest discover -s labs/lab-05-runtime-detection -p 'test_*.py'
+    - python scripts/validate_repository.py
 
 semgrep:
-  stage: test
-  image: returntocorp/semgrep
+  stage: scan
+  image:
+    name: semgrep/semgrep:1.177.0@sha256:acaac22ffc7b7cc5926de0751b223bce0b2491c33d18422fa72f632c78d81198
+    entrypoint: ['']
   script:
-    - semgrep ci --config ${SEMGREP_RULES}
+    - mkdir -p reports
+    - semgrep --test --config configs/semgrep.yml labs/lab-01-precommit-sast/fixtures/no_eval.py
+    - semgrep --test --config configs/semgrep.yml labs/lab-01-precommit-sast/fixtures/no_eval.js
+    - semgrep scan --config configs/semgrep.yml --error --metrics off --json-output reports/semgrep.json samples
+  artifacts:
+    when: always
+    expire_in: 14 days
+    paths: [reports/semgrep.json]
 
 trivy_fs:
-  stage: test
-  image: aquasec/trivy:0.50.1
+  stage: scan
   script:
-    - trivy fs --severity CRITICAL,HIGH --ignore-unfixed .
+    - python scripts/install_tool.py trivy gitleaks
+    - mkdir -p reports
+    - .tools/bin/gitleaks dir . --redact --no-banner --report-format json --report-path reports/gitleaks.json
+    - .tools/bin/trivy fs --config configs/trivy.yaml --format json --output reports/trivy.json .
+  artifacts:
+    when: always
+    expire_in: 14 days
+    paths: [reports/trivy.json, reports/gitleaks.json]
+
+policy_fixtures:
+  stage: scan
+  script:
+    - python scripts/install_tool.py kyverno gator
+    - PATH="$CI_PROJECT_DIR/.tools/bin:$PATH" bash policies/verify.sh
 
 sbom_syft:
-  stage: test
-  image: anchore/syft:v0.101.0
+  stage: sbom
   script:
-    - syft dir:. -o cyclonedx-json > sbom.json
+    - python scripts/install_tool.py syft
+    - mkdir -p reports
+    - .tools/bin/syft --config configs/syft.yaml dir:samples/sample-api -o cyclonedx-json=reports/source-sbom.cdx.json
   artifacts:
-    paths:
-      - sbom.json
+    expire_in: 14 days
+    paths: [reports/source-sbom.cdx.json]
 
 sign_sbom:
-  stage: test
-  image: gcr.io/projectsigstore/cosign:v2.2.4
+  stage: sign
+  needs:
+    - job: sbom_syft
+      artifacts: true
+  id_tokens:
+    SIGSTORE_ID_TOKEN:
+      aud: sigstore
+  rules:
+    - if: '$CI_SERVER_HOST == "gitlab.com" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"'
   script:
-    - COSIGN_EXPERIMENTAL=1 cosign sign-blob --yes --output-signature sbom.sig sbom.json
-  dependencies:
-    - sbom_syft
+    - python scripts/install_tool.py cosign
+    - .tools/bin/cosign sign-blob --yes --bundle reports/source-sbom.sigstore.json reports/source-sbom.cdx.json
+    - .tools/bin/cosign verify-blob --bundle reports/source-sbom.sigstore.json --certificate-identity "${CI_PROJECT_URL}//${CI_CONFIG_PATH}@refs/heads/${CI_DEFAULT_BRANCH}" --certificate-oidc-issuer "$CI_SERVER_URL" reports/source-sbom.cdx.json
   artifacts:
-    paths:
-      - sbom.sig
-  when: manual
-  allow_failure: true
+    expire_in: 30 days
+    paths: [reports/source-sbom.cdx.json, reports/source-sbom.sigstore.json]

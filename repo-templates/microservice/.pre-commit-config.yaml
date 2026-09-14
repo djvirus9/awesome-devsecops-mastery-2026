@@ -1,10 +1,5 @@
-repos:
-  - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.18.1
-    hooks:
-      - id: gitleaks
-  - repo: https://github.com/returntocorp/semgrep
-    rev: v1.64.0
-    hooks:
-      - id: semgrep
-        args: ["--config", "p/ci", "--error", "--severity", "ERROR"]
+# Compatibility notice only, not an installable pre-commit configuration.
+# The generator copies the canonical root hook configuration with its dependencies.
+status: compatibility-reference
+canonical_config: ../../.pre-commit-config.yaml
+setup_guide: README.md

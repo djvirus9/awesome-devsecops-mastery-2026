@@ -1,0 +1,5 @@
+{
+  "denied_requests": {"threshold": 3, "window_seconds": 120},
+  "heartbeat_max_age_seconds": 90,
+  "services": {"sample-api": "sample-api-oncall"}
+}

@@ -3,10 +3,11 @@ kind: K8sRequiredLabels
 metadata:
   name: require-app-label
 spec:
+  enforcementAction: dryrun
   match:
+    namespaces: [devsecops-reference]
     kinds:
       - apiGroups: [""]
         kinds: ["Pod"]
   parameters:
-    labels:
-      - key: "app"
+    labels: [app]

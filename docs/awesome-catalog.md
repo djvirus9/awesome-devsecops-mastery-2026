@@ -1,6 +1,6 @@
-# Awesome DevSecOps Catalog (Current)
+# DevSecOps resource catalog
 
-A modern, curated index of tools, platforms, and references across the DevSecOps lifecycle.
+A discovery index of tools, platforms, and references. Listing does not mean that an integration is implemented or validated here. Start with the [selection comparison](tool-comparison.md), [reference tool pins](../tool-versions.json), and [validation scope](validation.md). Links were reviewed in September 2026; individual products require their own maintenance and license review.
 
 ## Table of Contents
 
@@ -128,19 +128,19 @@ A modern, curated index of tools, platforms, and references across the DevSecOps
 - [TheHive](https://thehive-project.org/)
 - [Cortex](https://github.com/TheHive-Project/Cortex)
 - [PagerDuty](https://www.pagerduty.com/)
-- [Splunk SOAR](https://www.splunk.com/en_us/software/splunk-soar.html)
+- [Splunk SOAR documentation](https://help.splunk.com/en/splunk-soar)
 
 ## Threat Modeling
 
 - [OWASP Threat Modeling](https://owasp.org/www-community/Threat_Modeling)
-- [Microsoft Threat Modeling](https://learn.microsoft.com/security/engineering/threat-modeling)
+- [Microsoft Threat Modeling Tool](https://learn.microsoft.com/en-us/azure/security/develop/threat-modeling-tool)
 - [MITRE ATT&CK](https://attack.mitre.org/)
 
 ## Compliance and Frameworks
 
 - [NIST 800-53](https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final)
 - [ISO 27001](https://www.iso.org/isoiec-27001-information-security.html)
-- [SOC 2](https://www.aicpa.org/interestareas/frc/assuranceadvisoryservices/socforserviceorganizations.html)
+- [AICPA SOC services](https://www.aicpa-cima.com/resources/landing/system-and-organization-controls-soc-suite-of-services)
 - [CIS Benchmarks](https://www.cisecurity.org/cis-benchmarks)
 
 ## SBOM and Vulnerability Databases

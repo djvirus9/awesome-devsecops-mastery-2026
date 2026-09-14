@@ -1,62 +1,48 @@
-# Lab 01: Pre-commit SAST
+# Lab 01: local source checks
 
-## Overview
+Phase 1 · 30–45 minutes · local Python and Semgrep. Complete [foundation setup](../../docs/foundation.md). Install the Semgrep version declared in [tool-versions.json](../../tool-versions.json) using its [official installation guide](https://semgrep.dev/docs/getting-started/quickstart). Run from the repository root.
 
-Add local guardrails so secrets and basic security issues are blocked before they reach the repo.
+## Exercise
 
-## Objectives
+```bash
+make setup
+make test
+make sast
+```
 
-- Install a pre-commit framework
-- Add secret scanning and SAST checks
-- Fail commits on high-severity findings
+`make sast` loads [configs/semgrep.yml](../../configs/semgrep.yml), fails on findings, and retains `reports/semgrep.json`. Read the actual rules before interpreting a clean result: this small local rule set is a baseline, not comprehensive code review.
 
-## Time
+The [harmless fixture](fixtures/no_eval.py) contains a constant arithmetic expression evaluated dynamically. It is only a scanner input; no user-controlled content or external system is involved.
 
-30-45 minutes
+```bash
+semgrep scan --config configs/semgrep.yml --error --metrics off labs/lab-01-precommit-sast/fixtures/no_eval.py
+```
 
-## Prerequisites
+Expect a `no-eval` finding and exit status 1. The next command validates the annotated positive and negative cases:
 
-- Git installed
-- Python 3
-- Access to [pre-commit](https://pre-commit.com/), [Gitleaks](https://github.com/gitleaks/gitleaks), [Semgrep](https://semgrep.dev/)
+```bash
+semgrep --test --config configs/semgrep.yml labs/lab-01-precommit-sast/fixtures/no_eval.py
+semgrep --test --config configs/semgrep.yml labs/lab-01-precommit-sast/fixtures/no_eval.js
+```
 
-## Steps
+The solution is direct arithmetic or a purpose-built parser when parsing is a requirement. The fixtures show direct arithmetic as the allowed case. Python and JavaScript use separate language-specific rules; both annotated tests must pass. Keep deliberate fixtures out of the application scan scope.
 
-1. Install pre-commit.
-   ```bash
-   python3 -m pip install pre-commit
-   ```
+## Hook and CI parity
 
-2. Add a `.pre-commit-config.yaml` with secret and SAST scanning.
-   ```yaml
-   repos:
-     - repo: https://github.com/gitleaks/gitleaks
-       rev: v8.18.1
-       hooks:
-         - id: gitleaks
-     - repo: https://github.com/returntocorp/semgrep
-       rev: v1.64.0
-       hooks:
-         - id: semgrep
-           args: ["--config", "p/ci", "--error", "--severity", "ERROR"]
-   ```
+The repository CI runs the same rule file. A local hook is a convenience; it does not enforce merge policy. The supplied local hooks use the pinned Semgrep package and a locally installed Gitleaks binary. Install pre-commit from its [official instructions](https://pre-commit.com/#installation), install Gitleaks through the reviewed tool helper, then run:
 
-3. Install git hooks.
-   ```bash
-   pre-commit install
-   ```
+```bash
+python3 scripts/install_tool.py gitleaks
+pre-commit install
+pre-commit run --all-files
+```
 
-4. Add a test secret or vulnerable snippet and attempt a commit.
+Secret scanning is distinct from the arithmetic fixture. Never use a real credential as test input. If a real secret is exposed, notify its owner and revoke/rotate it before treating code removal as completion. The [secret-leak playbook](../../playbooks/README.md) covers the response.
 
-5. Fix the issue and re-commit.
+## Verification and troubleshooting
 
-## Validation
+Completion evidence: normal sample checks pass, the fixture produces the named finding, the annotated rule tests pass, and you can explain the fix. An empty result from the wrong path is not a pass.
 
-- Commits with secrets or high-severity findings are blocked.
-- `pre-commit run --all-files` passes after fixes.
+If Semgrep is missing, verify its install and version. If no finding appears, confirm the selected configuration and fixture path. If a hook is bypassed, CI should still run; [Lab 02](../lab-02-ci-pr-gates/README.md) verifies that boundary. Keep reports local, retain sanitized result notes, and remove an optional practice hook with `pre-commit uninstall` if you no longer want it.
 
-## Extensions
-
-- Add [Talisman](https://github.com/thoughtworks/talisman) for additional checks.
-- Add language-specific rule packs in [Semgrep](https://semgrep.dev/).
-- Run pre-commit in CI for parity.
+Challenge: explain why suppressing the entire sample directory would make this control ineffective. Solution: it removes the protected code from coverage; suppress only a reviewed, scoped case with a tracked rationale and expiry where the tool supports it.

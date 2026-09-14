@@ -1,0 +1,35 @@
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  name: "bad-deployment"
+  namespace: "devsecops-reference"
+spec:
+  selector:
+    matchLabels:
+      app: "sample-api"
+  template:
+    metadata:
+      labels:
+        app: "sample-api"
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile:
+          type: "RuntimeDefault"
+      containers:
+        -
+          name: "sample-api"
+          image: "devsecops-reference:local"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - "ALL"
+            runAsUser: 0
+          resources:
+            limits:
+              cpu: "250m"
+              memory: "128Mi"

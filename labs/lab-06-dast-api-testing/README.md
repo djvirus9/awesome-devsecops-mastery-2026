@@ -1,53 +1,38 @@
-# Lab 06: DAST and API Testing
+# Lab 06: defensive API validation
 
-## Overview
+Phase 4 · 30–45 minutes · local Python only. This is Lab 06 for historical URL compatibility. Use the supplied synthetic API and [foundation setup](../../docs/foundation.md); no external target, cloud account, or privileged scanner is required.
 
-Run dynamic application security testing in staging and validate API security using the OpenAPI spec.
+## Exercise and expected coverage
 
-## Objectives
+Read the [API setup](../../samples/sample-api/README.md), [OpenAPI contract](../../samples/sample-api/openapi.yaml), and [regression tests](../../tests/test_sample_api.py). Run from the repository root:
 
-- Run a DAST baseline scan
-- Test APIs using an OpenAPI schema
-- Track and triage findings
+```bash
+make setup
+.venv/bin/python -m unittest discover -s tests -p 'test_sample_api.py' -v
+```
 
-## Time
+These tests use the application test client with synthetic owners and tokens. They check expected behavior without starting a remote service.
 
-60-90 minutes
+| Route/state | Expected result | Risk addressed |
+| --- | --- | --- |
+| `GET /health`, no token | 200 health response | Health endpoint contract. |
+| Protected route, missing/invalid token | 401 | Authentication required. |
+| List with Alice/Bob identity | Only that owner's records | Server-side ownership filtering. |
+| Item owned by caller | 200 and expected record | Authorized behavior remains usable. |
+| Other owner's or absent item | Unavailable with consistent response | No cross-owner disclosure. |
 
-## Prerequisites
+Compare the table with the OpenAPI document and tests. If a new route is introduced, add positive and negative requirements before considering it covered.
 
-- Staging environment URL
-- OpenAPI spec (JSON or YAML)
-- Docker installed
-- [OWASP ZAP](https://www.zaproxy.org/)
+For a real HTTP sanity check, start the sample with the explicit demonstration token map from the [quick start](../../README.md), then make the two documented successful local requests. Unit tests and local HTTP checks establish different evidence; neither validates a TLS proxy, gateway, or production identity provider.
 
-## Steps
+## Baseline DAST versus API authorization
 
-1. Run a ZAP baseline scan against staging.
-   ```bash
-   docker run --rm -t owasp/zap2docker-stable zap-baseline.py \
-     -t https://staging.example.com \
-     -r zap-report.html
-   ```
+A passive baseline can identify issues in observed responses, such as missing headers. It cannot establish that every owner/route authorization rule is correct. This lab's required path is the deterministic regression suite. Optional passive-only local observation is described in [recipes](../../recipes/README.md); retain reports and keep the synthetic service in an isolated environment. There is no active scan or arbitrary-target workflow in this lab.
 
-2. Run an API scan using the OpenAPI spec.
-   ```bash
-   docker run --rm -t -v $(pwd):/zap/wrk owasp/zap2docker-stable zap-api-scan.py \
-     -t /zap/wrk/openapi.yaml -f openapi \
-     -r zap-api-report.html
-   ```
+## Verification, troubleshooting, cleanup
 
-3. Review the report and categorize findings.
+Record the test count/result, commit, route/owner coverage, and remaining deployment boundaries. Do not infer authenticated coverage from a healthy public endpoint.
 
-4. Add a CI job that fails on high-severity results.
+If tests cannot import Flask, rerun `make setup` and use `.venv/bin/python`. If the local HTTP request returns 401, check the server's token map and bearer header. If the port is occupied, stop the existing sample process before retrying.
 
-## Validation
-
-- ZAP reports are generated and archived.
-- High-severity issues fail the pipeline.
-
-## Extensions
-
-- Add authenticated scans with session scripts.
-- Run fuzzing with [Nuclei](https://github.com/projectdiscovery/nuclei).
-- Add API testing with [42Crunch](https://42crunch.com/).
+Stop the optional server with Ctrl+C. Test data stays in memory, and the suite creates no customer accounts. Challenge: add a harmless new owner with no records in a private exercise and define the list response. Solution: authenticated empty collection, without returning another owner's data; add a regression to preserve that expectation.

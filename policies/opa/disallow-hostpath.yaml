@@ -1,11 +1,11 @@
 apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: K8sPSPHostFilesystem
+kind: K8sDisallowHostPath
 metadata:
   name: disallow-hostpath
 spec:
+  enforcementAction: dryrun
   match:
+    namespaces: [devsecops-reference]
     kinds:
       - apiGroups: [""]
         kinds: ["Pod"]
-  parameters:
-    allowedHostPaths: []

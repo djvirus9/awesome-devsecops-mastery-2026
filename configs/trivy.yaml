@@ -1,7 +1,19 @@
-severity: CRITICAL,HIGH
-ignore-unfixed: true
+exit-code: 1
+severity:
+  - HIGH
+  - CRITICAL
 timeout: 10m
+vulnerability:
+  ignore-unfixed: false
 scan:
-  security-checks:
+  file-patterns:
+    - 'pip:(^|/)requirements-dev\.txt$'
+  scanners:
     - vuln
-    - config
+    - secret
+  skip-dirs:
+    - .git
+    - .venv
+    - .tools
+    - .cache
+    - reports

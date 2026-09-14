@@ -57,10 +57,15 @@ representative at an online or offline event.
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the community leaders responsible for enforcement at the contact
-methods listed in the Security Policy. All complaints will be reviewed and
-investigated promptly and fairly.
+For ordinary moderation concerns that are safe to discuss publicly, mention
+@djvirus9 on the relevant discussion or issue without sharing personal details.
+For sensitive abuse, use GitHub's Report content action on the relevant content;
+that report goes to GitHub, not a private maintainer inbox. A separate private
+maintainer conduct contact has not been published. Do not post sensitive details
+publicly or use vulnerability reporting for unrelated conduct complaints.
+
+Maintainer moderation decisions should explain the applicable standard and
+consider the evidence fairly. No response-time commitment is made.
 
 All community leaders are obligated to respect the privacy and security of the
 reporter of any incident.

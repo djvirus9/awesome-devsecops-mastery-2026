@@ -1,26 +1,6 @@
-name: Serverless CI
-
-on:
-  pull_request:
-  push:
-    branches: [main]
-
-permissions:
-  contents: read
-
-jobs:
-  security:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: returntocorp/semgrep-action@v1
-        with:
-          config: p/ci
-      - uses: aquasecurity/trivy-action@0.19.0
-        with:
-          scan-type: fs
-          scan-ref: .
-          severity: CRITICAL,HIGH
-          ignore-unfixed: true
-      - name: IaC scan (placeholder)
-        run: echo "Run Checkov or KICS on templates"
+# Compatibility notice only. This is not a GitHub Actions workflow.
+# Use scripts/bootstrap_template.py from the source repository root.
+status: compatibility-reference
+profile: serverless
+canonical_workflow: ../../.github/workflows/devsecops-golden-pipeline.yml
+setup_guide: README.md

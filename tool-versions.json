@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "reviewed_at": "2026-09-15",
+  "trust_model": "SHA256 values are reviewed pins from official GitHub release asset.digest metadata. Matching a pin proves downloaded bytes match this reviewed release asset; it does not prove provenance, trustworthy build execution, or absence of malicious code. Review repository ownership, release identity and upstream attestations separately when updating.",
+  "runtime_versions": {
+    "python": "3.12",
+    "semgrep": "1.177.0"
+  },
+  "tools": {
+    "syft": {
+      "version": "1.51.1",
+      "repository": "anchore/syft",
+      "platforms": {
+        "linux-amd64": {
+          "asset": "syft_1.51.1_linux_amd64.tar.gz",
+          "sha256": "8fcb33017a0dc1058298c923c436d19dfa68ae93968e0b423248542e3afb9fc3",
+          "member": "syft"
+        },
+        "darwin-arm64": {
+          "asset": "syft_1.51.1_darwin_arm64.tar.gz",
+          "sha256": "ac063af3b9874769deb7ea1e6d76841e68f9e3bb50cd654226fc977de65532c1",
+          "member": "syft"
+        }
+      }
+    },
+    "cosign": {
+      "version": "3.1.3",
+      "repository": "sigstore/cosign",
+      "platforms": {
+        "linux-amd64": {
+          "asset": "cosign-linux-amd64",
+          "sha256": "4629c757b7618056f8ddd7e2625ae9fdd94c0372a65049520bc7d9df9efc7f71",
+          "member": null
+        },
+        "darwin-arm64": {
+          "asset": "cosign-darwin-arm64",
+          "sha256": "5cf948c2f4dfe59687bdd0b8523709067383e03982cc543475c8a7dc70e92a76",
+          "member": null
+        }
+      }
+    },
+    "trivy": {
+      "version": "0.74.0",
+      "repository": "aquasecurity/trivy",
+      "platforms": {
+        "linux-amd64": {
+          "asset": "trivy_0.74.0_Linux-64bit.tar.gz",
+          "sha256": "2ae6fe3ee734b7fdf11335663e18c75ea12dccc76062f09f164a3b0f8be4371a",
+          "member": "trivy"
+        },
+        "darwin-arm64": {
+          "asset": "trivy_0.74.0_macOS-ARM64.tar.gz",
+          "sha256": "1caada5e0e2091909357c7525d3aa76f4b660b13821bc143b190c7483e31cc11",
+          "member": "trivy"
+        }
+      }
+    },
+    "gitleaks": {
+      "version": "8.30.1",
+      "repository": "gitleaks/gitleaks",
+      "platforms": {
+        "linux-amd64": {
+          "asset": "gitleaks_8.30.1_linux_x64.tar.gz",
+          "sha256": "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb",
+          "member": "gitleaks"
+        },
+        "darwin-arm64": {
+          "asset": "gitleaks_8.30.1_darwin_arm64.tar.gz",
+          "sha256": "b40ab0ae55c505963e365f271a8d3846efbc170aa17f2607f13df610a9aeb6a5",
+          "member": "gitleaks"
+        }
+      }
+    },
+    "kyverno": {
+      "version": "1.19.1",
+      "repository": "kyverno/kyverno",
+      "platforms": {
+        "linux-amd64": {
+          "asset": "kyverno-cli_v1.19.1_linux_x86_64.tar.gz",
+          "sha256": "b38228f367fc0fdc2b08f4c83ea50ac5f16c60ff8d62d76a66157c33c47b70ae",
+          "member": "kyverno"
+        },
+        "darwin-arm64": {
+          "asset": "kyverno-cli_v1.19.1_darwin_arm64.tar.gz",
+          "sha256": "2cf5febbedaafca5d3c7819925a49f9723bf4c3337a1327b6f72970480af385a",
+          "member": "kyverno"
+        }
+      }
+    },
+    "gator": {
+      "version": "3.23.1",
+      "repository": "open-policy-agent/gatekeeper",
+      "platforms": {
+        "linux-amd64": {
+          "asset": "gator-v3.23.1-linux-amd64.tar.gz",
+          "sha256": "c268d7b809c9fe59a110ab0bf7c296ab00b0b6c894c209cd15e94194590291bb",
+          "member": "gator"
+        },
+        "darwin-arm64": {
+          "asset": "gator-v3.23.1-darwin-arm64.tar.gz",
+          "sha256": "dc96df4a0bad0427b36d2b10473801528ca5bdb00f2addb34d17bb7d706ed99b",
+          "member": "gator"
+        }
+      }
+    }
+  }
+}

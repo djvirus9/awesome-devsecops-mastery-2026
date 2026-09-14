@@ -1,54 +1,27 @@
-# Lab 02: CI PR Gates
+# Lab 02: executing checks and merge enforcement
 
-## Overview
+Phase 2 · 45–60 minutes · local baseline plus a practice GitHub repository where you can manage rules. Start with [Lab 01](../lab-01-precommit-sast/README.md). Required-check behavior must be observed in GitHub; local command success cannot establish repository settings.
 
-Enforce security checks on pull requests with required status checks and risk-based policies.
+## Exercise
 
-## Objectives
+Run `make test`, `make validate`, and `make sast` locally. Read the actual [reference workflow](../../.github/workflows/devsecops-golden-pipeline.yml); reuse it with its scripts, configs, locks, and sample files. Copying only workflow YAML loses those dependencies.
 
-- Add required checks for SAST and SCA
-- Set clear failure thresholds
-- Introduce a security exception workflow
+The workflow's controls cover application/detection tests, repository validation, configured source checks, dependencies/secrets, policy fixtures, and a built-image inventory. Scanner execution errors must fail the job. A severity filter alone does not define failure behavior; inspect the explicit exit policy and the stored report. See [Trivy exit behavior](https://trivy.dev/docs/latest/configuration/others/).
 
-## Time
+In your practice repository, create a normal PR and observe the actual job names and retained artifacts. Configure a rule targeting its default branch to require `Required checks`, a pull request, appropriate review, and deliberate review of workflow changes. Review bypass permissions and whether the repository's plan supports the desired rule. See [GitHub required status checks](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-status-checks-before-merging).
 
-45-60 minutes
+Create a disposable branch where a harmless assertion in an application test deliberately expects the wrong health result. Open a PR and confirm that the test job and `Required checks` fail and merging is blocked. Correct the expected value in a follow-up commit, rerun checks, and confirm the gate becomes eligible. Keep the exercise in the practice repository; no real vulnerability needs to be introduced.
 
-## Prerequisites
+## Thresholds and exceptions
 
-- Repository admin access
-- CI enabled (e.g., [GitHub Actions](https://docs.github.com/actions))
+Record which findings block, whether existing findings are included, report retention, and who responds to a failed scan. Use the [exception template](../../templates/security-exception-template.md) and [control catalog](../../templates/control-catalog.md). An exception document does not suppress a scanner automatically; its exact scope/expiry must match the enforcement mechanism. A broken scanner is not a successful empty scan.
 
-## Steps
+## Verification, troubleshooting, cleanup
 
-1. Create a security workflow that runs on pull requests.
-   ```yaml
-   name: Security Checks
-   on: [pull_request]
-   jobs:
-     scan:
-       runs-on: ubuntu-latest
-       steps:
-         - uses: actions/checkout@v4
-         - name: SAST
-           run: echo "Run SAST" # https://semgrep.dev/
-         - name: SCA
-           run: echo "Run SCA" # https://github.com/aquasecurity/trivy
-   ```
+Record run URLs, failing and corrected commits, required-check settings, observed merge behavior, and report names. Baseline job names are `Quality (Python 3.12)`, `Quality (Python 3.14)`, `SAST`, `Dependency and secret scan`, `Policy fixtures`, `Container and SBOM`, and the aggregate `Required checks`; check the workflow/run after any rename.
 
-2. Enable branch protection for `main` and require the security checks.
+If a required check stays pending, inspect trigger filters and exact status names. If a scanner fails to initialize, keep its error instead of granting an automatic exception. Fork PRs should not need publishing credentials. CI checks do not authorize releases.
 
-3. Define thresholds (example: fail on Critical/High findings).
+Close the disposable PR after recording evidence. Keep intended branch rules active in the practice repository, and remove only settings you deliberately created for a temporary exercise.
 
-4. Add a security exception process using [templates/security-exception-template.md](../../templates/security-exception-template.md).
-
-## Validation
-
-- PRs cannot merge without passing required checks.
-- Exceptions are documented and time-bound.
-
-## Extensions
-
-- Add [CodeQL](https://codeql.github.com/) and [Dependabot](https://docs.github.com/en/code-security/dependabot).
-- Add license checks with [FOSSA](https://fossa.com/).
-- Add automatic ticket creation on failed checks.
+Challenge: a job prints “scan complete” but does not invoke a scanner. Solution: the log proves only a message was printed; require command execution, exit behavior, report evidence, and the controlled failure test above.

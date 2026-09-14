@@ -1,0 +1,52 @@
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: restrict-workload
+spec:
+  validationActions: [Audit, Warn]
+  failurePolicy: Fail
+  evaluation:
+    background:
+      enabled: true
+  autogen:
+    podControllers:
+      controllers: []
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [pods, pods/ephemeralcontainers]
+      - apiGroups: [apps]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [deployments, statefulsets, daemonsets, replicasets]
+      - apiGroups: [batch]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [jobs, cronjobs]
+  matchConditions:
+    - name: reference-namespace
+      expression: request.namespace == 'devsecops-reference'
+  variables:
+    - name: podSpec
+      expression: "object.kind == 'Pod' ? object.spec : (object.kind == 'CronJob' ? object.spec.jobTemplate.spec.template.spec : object.spec.template.spec)"
+    - name: containers
+      expression: variables.podSpec.containers + variables.podSpec.?initContainers.orValue([]) + variables.podSpec.?ephemeralContainers.orValue([])
+  validations:
+    - expression: >-
+        !variables.podSpec.?hostNetwork.orValue(false) &&
+        !variables.podSpec.?hostPID.orValue(false) &&
+        !variables.podSpec.?hostIPC.orValue(false) &&
+        variables.podSpec.?volumes.orValue([]).all(v, !has(v.hostPath))
+      message: Host namespaces and hostPath volumes are forbidden.
+    - expression: >-
+        variables.containers.all(c,
+          !c.?securityContext.?allowPrivilegeEscalation.orValue(true) &&
+          c.?securityContext.?readOnlyRootFilesystem.orValue(false) &&
+          'ALL' in c.?securityContext.?capabilities.?drop.orValue([]) &&
+          size(c.?securityContext.?capabilities.?add.orValue([])) == 0 &&
+          c.?securityContext.?seccompProfile.?type.orValue(variables.podSpec.?securityContext.?seccompProfile.?type.orValue('')) == 'RuntimeDefault')
+      message: Containers require no privilege escalation, read-only roots, ALL capabilities dropped with none added, and RuntimeDefault seccomp.
+    - expression: variables.podSpec.?automountServiceAccountToken.orValue(true) == false
+      message: The reference app does not use the Kubernetes API; explicitly disable service account token mounting.

@@ -1,16 +1,17 @@
-# Microservice Repo Template
+# Microservice template profile
 
-## Includes
+This profile generates the complete [sample API reference](../../projects/microservice-api/README.md), including real local/CI checks, dependency locks, image build/inventory support, policy fixtures, and offline detection/response exercises.
 
-- CI with SAST, SCA, SBOM, signing
-- Pre-commit hooks (optional)
-- DAST placeholder
+From the source repository root:
 
-## Files
+```bash
+python3 scripts/bootstrap_template.py --profile microservice --destination ../my-microservice-reference
+cd ../my-microservice-reference
+make setup
+make test
+make validate
+```
 
-- `.github/workflows/ci.yml`
-- `.pre-commit-config.yaml`
+See the [template guide](../README.md) for prerequisites, exact generated structure, refusal/cleanup behavior, and review before publishing. Read generated `TEMPLATE-SETUP.md`, then follow the root quick start. The canonical workflow is at `.github/workflows/devsecops-golden-pipeline.yml`; its shared dependencies are copied together.
 
-## Notes
-
-Update the DAST target URL to your staging environment.
+Docker/scanner/policy tools need the declared installations. Keyless signing, manual registry release, and deployed promotion are separate steps with explicit identity/environment prerequisites. No DAST target URL, production service, or externally delivered alert is created. The old [ci.yml](ci.yml) is a compatibility notice only.
