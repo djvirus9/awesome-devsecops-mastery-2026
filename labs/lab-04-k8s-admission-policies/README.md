@@ -32,6 +32,7 @@ helm upgrade --install kyverno kyverno/kyverno --version 3.9.1 \
   --set features.policyExceptions.enabled=true \
   --set features.policyExceptions.namespace=policy-exceptions \
   --wait --timeout 5m
+kubectl --context kind-devsecops-reference apply -f projects/k8s-gitops/kyverno-report-rbac.yaml
 kubectl --context kind-devsecops-reference apply \
   -f policies/kyverno/require-non-root.yaml \
   -f policies/kyverno/disallow-privileged.yaml \
@@ -40,7 +41,7 @@ kubectl --context kind-devsecops-reference apply \
 kubectl --context kind-devsecops-reference get validatingpolicies
 ```
 
-Wait for the policies' `READY` column to show true. The policy files use `Audit` and `Warn`; evaluation errors use `failurePolicy: Fail`. Check audit warnings with server dry runs:
+Wait for the policies' `READY` column (`status.conditionStatus.ready`) to show true; these policies do not expose a standard `Ready` condition. The supplemental RBAC grants only the Kyverno reports controller read access to the matched `pods/ephemeralcontainers` subresource, as required by its permission check; the sample app gains no permissions. The policy files use `Audit` and `Warn`; evaluation errors use `failurePolicy: Fail`. Check audit warnings with server dry runs:
 
 ```bash
 kubectl --context kind-devsecops-reference apply --dry-run=server -f policies/fixtures/good.yaml

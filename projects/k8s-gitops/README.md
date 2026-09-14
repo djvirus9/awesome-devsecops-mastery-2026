@@ -110,6 +110,7 @@ The automated signed path installs Helm chart **0.10.8**, whose default image is
 - `ErrImageNeverPull`: build and load the exact image tag into this Kind cluster; `imagePullPolicy: Never` prevents an accidental remote pull.
 - `CreateContainerConfigError`: inspect whether `sample-api-tokens` exists and contains `API_TOKENS_JSON`.
 - Denied workload: identify the named policy, inspect the container or Pod context, and fix the manifest before retrying. Reapplying policy YAML resets it to Audit/Warn.
+- Policies not ready: inspect `status.conditionStatus`; `RBACPermissionsGranted: False` for `pods/ephemeralcontainers` means the [read-only reporting RBAC](kyverno-report-rbac.yaml) from Lab 04 is missing. Do not remove the subresource match to silence the error.
 - Network test failure: check both Job logs, Cilium readiness, service endpoints, and actual NetworkPolicy selection. A DNS failure is not an expected denial result.
 - Unexpected cluster: stop and use the exact `kind-devsecops-reference` context; the helper scripts fix that context explicitly.
 

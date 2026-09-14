@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Verify the fictional dashboard with isolated Linux/amd64 Docker services.
 
-Only Grafana is published, on a random host-loopback port. The exporter,
-Prometheus and renderer remain inside one task-owned network namespace. No
+No service ports are published. Grafana, the exporter, Prometheus and renderer
+remain inside one task-owned network namespace. No
 host socket, credentials, sensor, existing Grafana or production data is mounted.
 """
 
@@ -78,6 +78,41 @@ def fetch(base, path, authorization, data=None, timeout=15):
 
 def fetch_json(base, path, authorization, data=None):
     return json.loads(fetch(base, path, authorization, data))
+
+
+class GrafanaClient:
+    """Use the existing namespace without weakening the internal-only network.
+
+    Docker does not establish a host port mapping for an internal-only bridge.
+    Execute the same bounded, proxy-free HTTP helper beside the exporter instead.
+    The ephemeral authorization value travels through stdin, not command arguments.
+    """
+    def __init__(self, exporter, authorization):
+        if not re.fullmatch(r"[a-f0-9]{64}", exporter):
+            raise ValueError("Expected the exact task-owned exporter container ID")
+        self.exporter, self.authorization = exporter, authorization
+
+    def fetch(self, path, data=None, timeout=15):
+        code = ("import json,runpy,sys; "
+                "helper=runpy.run_path('/fixture/scripts/validate_dashboard.py'); "
+                "request=json.load(sys.stdin); "
+                "sys.stdout.buffer.write(helper['fetch']('http://127.0.0.1:3000',"
+                "request['path'],request['authorization'],request['data'],request['timeout']))")
+        request = {"path": path, "authorization": self.authorization, "data": data,
+                   "timeout": timeout}
+        result = subprocess.run(
+            ["docker", "exec", "--interactive", self.exporter, "python", "-c", code],
+            input=json.dumps(request).encode(), capture_output=True, env=DOCKER_ENV,
+            timeout=timeout + 15, check=False)
+        if result.returncode:
+            raise RuntimeError("Task-local Grafana request failed: " +
+                               result.stderr.decode("utf-8", errors="replace").strip())
+        if len(result.stdout) > MAX_RESPONSE:
+            raise RuntimeError("Dashboard response exceeded the evidence size limit")
+        return result.stdout
+
+    def json(self, path, data=None):
+        return json.loads(self.fetch(path, data))
 
 
 def wait_for(check, description, timeout=120):
@@ -163,7 +198,8 @@ def write_json(path, value):
 
 def prepare_fixture(directory):
     # Copy only the synthetic inputs and their reader, never the full checkout.
-    for relative in ("scripts/metrics.py", "metrics-templates/incident-metrics.json",
+    for relative in ("scripts/metrics.py", "scripts/validate_dashboard.py",
+                     "metrics-templates/incident-metrics.json",
                      "metrics-templates/incident-metrics.csv", "dashboards/prometheus.yml",
                      "dashboards/grafana-devsecops.json"):
         target = directory / relative
@@ -263,7 +299,7 @@ def validate(directory, reports, services):
     services.network = docker("network", "create", "--internal", "--label",
                               "devsecops.validation=" + services.name, services.name)
     exporter = services.create("exporter", ["--network", services.network,
-        "--publish", "127.0.0.1::3000", "--user", "10001:10001",
+        "--user", "10001:10001",
         "--env", "PYTHONDONTWRITEBYTECODE=1", *services.mount(".", "/fixture")],
         ["python", "/fixture/scripts/metrics.py", "--serve"])
     shared = ["--network", "container:" + exporter]
@@ -281,6 +317,7 @@ def validate(directory, reports, services):
         ["server", "--server.addr=127.0.0.1:8081", "--rate-limit.max-limit=1",
          "--rate-limit.min-limit=1"])
     grafana_env = {
+        "GF_SERVER_HTTP_ADDR": "127.0.0.1",
         "GF_SECURITY_ADMIN_PASSWORD": password,
         "GF_AUTH_ANONYMOUS_ENABLED": "false",
         "GF_ANALYTICS_REPORTING_ENABLED": "false",
@@ -299,13 +336,10 @@ def validate(directory, reports, services):
         "--tmpfs", "/var/log/grafana:rw,nosuid,nodev,size=32m,uid=472,gid=0",
         *services.mount("provisioning", "/etc/grafana/provisioning"),
         *services.mount("dashboards", "/fixture/dashboards")])
-    address = docker("port", exporter, "3000/tcp")
-    if not re.fullmatch(r"127\.0\.0\.1:[0-9]+", address):
-        raise RuntimeError("Expected exactly one loopback-only Grafana binding")
-    base = "http://" + address
     authorization = "Basic " + base64.b64encode(("admin:" + password).encode()).decode()
     services.redactions.append(authorization)
-    health = wait_for(lambda: fetch_json(base, "/api/health", authorization), "Grafana health")
+    client = GrafanaClient(exporter, authorization)
+    health = wait_for(lambda: client.json("/api/health"), "Grafana health")
     if health.get("database") != "ok":
         raise ValueError("Grafana database did not become healthy")
     write_json(reports / "grafana-health.json", health)
@@ -319,7 +353,7 @@ def validate(directory, reports, services):
     up = wait_for(scrape_ready, "successful fixture scrape")
     write_json(reports / "prometheus-up.json", up)
     write_json(reports / "prometheus-version.json", services.internal_json(exporter, "/api/v1/status/buildinfo"))
-    provisioned = fetch_json(base, "/api/dashboards/uid/devsecops-demo", authorization)
+    provisioned = client.json("/api/dashboards/uid/devsecops-demo")
     if len(provisioned.get("dashboard", {}).get("panels", [])) != 3:
         raise ValueError("Grafana did not provision all three panels")
     expected_queries = {panel["id"]: panel["targets"][0]["expr"] for panel in dashboard["panels"]}
@@ -328,7 +362,7 @@ def validate(directory, reports, services):
     if actual_queries != expected_queries:
         raise ValueError("Provisioned dashboard queries differ from the committed model")
     write_json(reports / "grafana-dashboard.json", provisioned)
-    datasource = fetch_json(base, f"/api/datasources/uid/{DATASOURCE_UID}/health", authorization)
+    datasource = client.json(f"/api/datasources/uid/{DATASOURCE_UID}/health")
     if datasource.get("status") != "OK":
         raise ValueError("Grafana datasource health check failed")
     write_json(reports / "grafana-datasource-health.json", datasource)
@@ -345,8 +379,8 @@ def validate(directory, reports, services):
                         "intervalMs": 15000, "maxDataPoints": 100})
     write_json(reports / "prometheus-queries.json", direct)
     now = int(time.time() * 1000)
-    queried = fetch_json(base, "/api/ds/query", authorization,
-                         {"from": str(now - 300000), "to": str(now), "queries": queries})
+    queried = client.json("/api/ds/query",
+                          {"from": str(now - 300000), "to": str(now), "queries": queries})
     write_json(reports / "grafana-queries.json", queried)
     values = grafana_values(queried)
     renders = []
@@ -355,7 +389,7 @@ def validate(directory, reports, services):
             "width": 1000, "height": 500, "tz": "UTC", "timeout": 90,
             "from": "now-5m", "to": "now", "var-DS_PROMETHEUS": DATASOURCE_UID})
         path = "/render/d-solo/devsecops-demo/demo?" + params
-        payload = fetch(base, path, authorization, timeout=120)
+        payload = client.fetch(path, timeout=120)
         dimensions = png_dimensions(payload)
         filename = f"panel-{panel_id}.png"
         (reports / filename).write_bytes(payload)
@@ -364,7 +398,8 @@ def validate(directory, reports, services):
     source_hashes = {relative: hashlib.sha256((directory / relative).read_bytes()).hexdigest()
                      for relative in ("dashboards/grafana-devsecops.json",
                                       "metrics-templates/incident-metrics.json",
-                                      "metrics-templates/incident-metrics.csv", "scripts/metrics.py")}
+                                      "metrics-templates/incident-metrics.csv", "scripts/metrics.py",
+                                      "scripts/validate_dashboard.py")}
     return {"values": values, "renders": renders, "source_sha256": source_hashes,
             "visual_review": "PNG structure validated; inspect panel images before claiming visual acceptance"}
 

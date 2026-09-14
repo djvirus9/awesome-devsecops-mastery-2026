@@ -16,6 +16,33 @@ SPEC.loader.exec_module(k8s)
 
 
 class K8sValidationTests(unittest.TestCase):
+    def test_kyverno_readiness_uses_live_nested_status_and_all_named_policies(self):
+        document = {"items": [{"metadata": {"name": name}, "status": {
+            "conditionStatus": {"ready": True, "conditions": [
+                {"type": "WebhookConfigured", "status": "True"},
+                {"type": "RBACPermissionsGranted", "status": "True"}]}}} for name in k8s.POLICIES]}
+        self.assertTrue(k8s.kyverno_policies_ready(document))
+        # This reproduces the first live run's failed report-permission state.
+        document["items"][0]["status"]["conditionStatus"]["ready"] = False
+        document["items"][0]["status"]["conditionStatus"]["conditions"][1]["status"] = "False"
+        self.assertFalse(k8s.kyverno_policies_ready(document))
+        document["items"][0]["status"] = {"conditions": [{"type": "Ready", "status": "True"}]}
+        self.assertFalse(k8s.kyverno_policies_ready(document))
+        self.assertFalse(k8s.kyverno_policies_ready({"items": document["items"][1:]}))
+        self.assertFalse(k8s.kyverno_policies_ready({}))
+
+    def test_reporting_permission_is_read_only_exact_resource_and_controller(self):
+        role, binding = list(yaml.safe_load_all((ROOT / 'projects/k8s-gitops/kyverno-report-rbac.yaml').read_text()))
+        self.assertEqual(role['rules'], [{'apiGroups': [''], 'resources': ['pods/ephemeralcontainers'],
+                                         'verbs': ['get', 'list', 'watch']}])
+        self.assertEqual(binding['roleRef']['name'], role['metadata']['name'])
+        self.assertEqual(binding['subjects'], [{'kind': 'ServiceAccount', 'name': 'kyverno-reports-controller', 'namespace': 'kyverno'}])
+        for name in k8s.POLICIES:
+            policy = yaml.safe_load((ROOT / 'policies/kyverno' / (name + '.yaml')).read_text())
+            matched = [resource for rule in policy['spec']['matchConstraints']['resourceRules'] for resource in rule['resources']]
+            self.assertIn('pods/ephemeralcontainers', matched)
+            self.assertTrue(policy['spec']['evaluation']['background']['enabled'])
+
     def test_only_exact_reference_repository_digest_is_accepted(self):
         valid = "ghcr.io/djvirus9/awesome-devsecops-mastery-2026/sample-api@sha256:" + "a" * 64
         self.assertEqual(k8s.validate_image_reference(valid), valid)

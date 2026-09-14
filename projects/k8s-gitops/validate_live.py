@@ -49,6 +49,14 @@ def admission_matches(result, allowed, policy=None):
             and not re.search(r"failed calling webhook|no endpoints available|context deadline exceeded", result.stdout, re.I))
 
 
+def kyverno_policies_ready(document):
+    """Kyverno ValidatingPolicy readiness is nested, not a Ready condition."""
+    policies = {obj.get("metadata", {}).get("name"): obj for obj in document.get("items", [])}
+    return (set(policies) == set(POLICIES)
+            and all(obj.get("status", {}).get("conditionStatus", {}).get("ready") is True
+                    for obj in policies.values()))
+
+
 class Validation:
     def __init__(self):
         self.reference = validate_image_reference(os.getenv("IMAGE_REFERENCE", ""))
@@ -112,6 +120,16 @@ class Validation:
     def fixture(self, name):
         return ROOT / "policies/fixtures" / f"{name}.yaml"
 
+    def wait_policies_ready(self):
+        deadline = time.monotonic() + 120
+        while True:
+            result = self.kube("Policy readiness", "get", "validatingpolicies", *POLICIES, "-o", "json")
+            if kyverno_policies_ready(json.loads(result.stdout)):
+                return
+            if time.monotonic() >= deadline:
+                raise RuntimeError("Kyverno policy readiness timed out; inspect conditionStatus in commands.log")
+            time.sleep(2)
+
     def preflight(self):
         if (platform.system(), platform.machine()) != ("Linux", "x86_64"):
             raise RuntimeError("This CI harness requires Linux amd64; use the manual guide on macOS")
@@ -158,9 +176,10 @@ class Validation:
                  "--namespace", "kyverno", "--create-namespace", "--kube-context", CONTEXT,
                  "--set", "features.policyExceptions.enabled=true", "--set", "features.policyExceptions.namespace=policy-exceptions",
                  "--wait", "--timeout", "5m"], timeout=360)
+        self.kube("Ephemeral-container reporting permission", "apply", "-f", "projects/k8s-gitops/kyverno-report-rbac.yaml")
         for policy in POLICIES:
             self.kube("Apply " + policy, "apply", "-f", f"policies/kyverno/{policy}.yaml")
-        self.kube("Policy readiness", "wait", "--for=condition=Ready", "validatingpolicies", "--all", "--timeout=120s")
+        self.wait_policies_ready()
         self.record("cluster-cni-and-admission-ready")
 
     def audit_deploy(self):
@@ -385,6 +404,15 @@ print('PASS: uid, capabilities, no-new-privileges, read-only root, writable tmp,
                                ("Policy reports", ["get", "policyreports", "-A", "-o", "yaml"])):
                 try:
                     self.kube(name, *args, check=False, timeout=100)
+                except (OSError, subprocess.SubprocessError):
+                    pass
+            for namespace, deployment in (("kyverno", "kyverno-admission-controller"),
+                                          ("kyverno", "kyverno-reports-controller"),
+                                          (CLUSTER, "sample-api"),
+                                          ("cosign-system", "policy-controller-webhook")):
+                try:
+                    self.kube(deployment + " diagnostic logs", "-n", namespace, "logs", "deployment/" + deployment,
+                              "--all-containers", "--tail=100", check=False, timeout=30)
                 except (OSError, subprocess.SubprocessError):
                     pass
             result = self.run("Delete owned Kind cluster", ["kind", "delete", "cluster", "--name", CLUSTER,
