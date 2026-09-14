@@ -1,29 +1,13 @@
-# Phase 02: CI PR Gates
+# Phase 2: CI and PR gates
 
-## Goals
+A merge gate needs an executing control, defined failure semantics, and a repository rule that requires the resulting check. [Lab 02](../../labs/lab-02-ci-pr-gates/README.md) connects those pieces in a practice repository.
 
-- Enforce security checks on every pull request
-- Reduce risk with defined thresholds and exceptions
+## Implementation contract
 
-## Practices
+The [workflow](../../.github/workflows/devsecops-golden-pipeline.yml) uses local configuration, tests, lock files, scripts, and sample artifacts. Preserve that dependency set when copying it. Use restricted job permissions and reviewed immutable action references. PR-controlled code must not gain release publishing identity.
 
-- Required status checks and branch protection
-- Risk-based fail thresholds
-- Exception workflows with approvals
+Platform owners define exact required status names, report retention, failure ownership, and which severity/risk thresholds block. AppSec documents existing findings, exclusions, and approved expiring exceptions; maintainers review changes to workflow trust. Errors initializing a scanner must fail visibly.
 
-## Tools
+Definition of done: a harmless incorrect assertion causes the real check and aggregate gate to fail; merge is blocked in the practice repo; the corrected commit passes. Retain settings and run evidence. A local green test does not establish branch enforcement.
 
-- CI: [GitHub Actions](https://docs.github.com/actions), [GitLab CI](https://docs.gitlab.com/ee/ci/)
-- SAST: [Semgrep](https://semgrep.dev/), [CodeQL](https://codeql.github.com/)
-- SCA: [Trivy](https://github.com/aquasecurity/trivy), [Snyk](https://snyk.io/)
-- Dependency updates: [Dependabot](https://docs.github.com/en/code-security/dependabot), [Renovate](https://docs.renovatebot.com/)
-
-## Deliverables
-
-- Required PR checks and branch protections
-- Exception workflow and audit log
-- Security checklist in PR templates
-
-## Lab
-
-- [Lab 02: CI PR Gates](../../labs/lab-02-ci-pr-gates/README.md)
+See [exceptions](../../templates/security-exception-template.md), [integration guides](../../integrations/README.md), and [GitHub required status checks](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-status-checks-before-merging).

@@ -1,27 +1,12 @@
-# Case Studies
+# Illustrative adoption scenarios
 
-Practical examples of implementing DevSecOps in different environments. Use these as reference blueprints.
+These are fictional planning scenarios, not customer case studies or measured outcomes. They demonstrate tradeoffs; substitute actual workload, budget, ownership, and evidence before making a decision.
 
-## Startup (1-10 engineers)
+| Scenario | Constraints | Initial choice | Tradeoff and validation |
+| --- | --- | --- | --- |
+| Small service team | One API, limited operating capacity | Shared local/CI tests, narrow source rules, dependency inventory, named owner | Keep rules understandable; prove a failing fixture blocks and exceptions expire. |
+| Growing SaaS | Multiple teams and release pipelines | Reusable CI contract, service inventory, artifact verification, policy rollout | Standardization needs clear ownership; compare adoption coverage and bypasses across teams. |
+| Large platform | Federated builders and many deployments | Builder identities, promotion trust policy, workload identity, telemetry contracts | Central policy can interrupt delivery; stage rollout and test recovery before enforcement. |
+| Regulated service | Sensitive data and retention obligations | Control-to-evidence mapping, access review, retained verification, recovery exercises | Evidence retention can itself expose data; classify and redact records and involve the relevant assurance owner. |
 
-- Stack: GitHub Actions, Semgrep, Trivy, Syft, Cosign
-- Focus: fast feedback, minimal overhead
-- Metrics: PR gate pass rate, SLA compliance
-
-## Mid-size SaaS (10-100 engineers)
-
-- Stack: GitHub or GitLab, Semgrep/CodeQL, Trivy/Snyk, OPA/Kyverno, Falco
-- Focus: standardized pipelines, staged gates, exception workflows
-- Metrics: SBOM coverage, MTTR, policy exceptions per quarter
-
-## Enterprise (100+ engineers)
-
-- Stack: centralized SOC, SIEM, policy-as-code, federated CI
-- Focus: governance, provenance, and consistent runtime detection
-- Metrics: signed artifact coverage, detection fidelity, audit readiness
-
-## Regulated Environment (PCI/HIPAA/SOC2)
-
-- Stack: signed artifacts, strict approval gates, auditable exceptions
-- Focus: evidence collection, compliance mapping, continuous monitoring
-- Metrics: audit findings, SLA adherence, coverage by asset criticality
+For the small-team scenario, complete the [microservice capstone](../projects/microservice-api/README.md) first. For a larger program, use the [domain scorecard](../scorecards/maturity-scorecard.md) to find missing foundations before adding runtime tools. No scenario here establishes compliance or predicts a percentage improvement.

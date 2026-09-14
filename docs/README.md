@@ -4,6 +4,11 @@ Start here for the DevSecOps mastery program. This section links the roadmap, ar
 
 ## Navigation
 
+- Start locally: [foundation.md](foundation.md)
+- Execution scope and release criteria: [validation.md](validation.md)
+- Integrated reference project: [microservice capstone](../projects/microservice-api/README.md)
+- Canonical control IDs: [control catalog](../templates/control-catalog.md)
+- Completed illustrative record: [release evidence](../evidence-packs/example-release.md)
 - Roadmap: [roadmap.md](roadmap.md)
 - Reference architecture: [reference-architecture.md](reference-architecture.md)
 - Maturity model: [maturity-model.md](maturity-model.md)
@@ -11,7 +16,7 @@ Start here for the DevSecOps mastery program. This section links the roadmap, ar
 - Metrics and KPIs: [metrics.md](metrics.md)
 - Resource index: [resources.md](resources.md)
 - Tool comparison: [tool-comparison.md](tool-comparison.md)
-- Case studies: [case-studies.md](case-studies.md)
+- Illustrative scenarios: [case-studies.md](case-studies.md)
 - Cheatsheets: [cheatsheets.md](cheatsheets.md)
 - Awesome catalog: [awesome-catalog.md](awesome-catalog.md)
 - Glossary: [glossary.md](glossary.md)

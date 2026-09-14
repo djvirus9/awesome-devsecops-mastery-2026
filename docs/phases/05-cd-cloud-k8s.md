@@ -1,28 +1,13 @@
-# Phase 05: CD, Cloud, and K8s
+# Phase 5: CD, cloud, and Kubernetes
 
-## Goals
+Use [Lab 04](../../labs/lab-04-k8s-admission-policies/README.md). Local policy evaluation and live cluster admission provide different evidence; preserve the historical lab URL and record both scopes explicitly.
 
-- Enforce policy at deploy time
-- Reduce misconfigurations and drift
+## Control progression
 
-## Practices
+Start with supplied allowed/denied fixtures and the [policy pack](../../policies/README.md). In a disposable supported cluster, inventory workloads, introduce policies in a reviewed rollout, observe denials, and then enforce. Evaluate applicable normal, init, and ephemeral container settings and inherited security context where the selected rule requires them.
 
-- Policy-as-code in CD
-- Admission controls in K8s
-- Environment promotions with approvals
+Platform owners also need a deployment design for workload identity/RBAC, namespace/network boundaries, secret delivery, resource limits, and expected image verification. Release owners promote immutable artifacts with retained evidence and a reversible rollback target. Cloud-provider permissions and hosting are environment choices, not provisioned assumptions.
 
-## Tools
+Definition of done for local work: allowed/denied fixtures have expected results. Cluster completion additionally needs controller/version setup, installation order, admission observations, scoped exceptions, drift handling, rollback, and cleanup. The [GitOps project](../../projects/k8s-gitops/README.md) describes the extension.
 
-- Policy: [Kyverno](https://kyverno.io/), [OPA Gatekeeper](https://open-policy-agent.github.io/gatekeeper/)
-- GitOps CD: [Argo CD](https://argo-cd.readthedocs.io/), [Flux](https://fluxcd.io/)
-- Cloud security: [Prowler](https://github.com/prowler-cloud/prowler), [ScoutSuite](https://github.com/nccgroup/ScoutSuite)
-
-## Deliverables
-
-- Baseline policy set
-- Admission controller deployed
-- Promotion rules and approvals
-
-## Lab
-
-- [Lab 04: K8s Admission Policies](../../labs/lab-04-k8s-admission-policies/README.md)
+References: [Kubernetes security contexts](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/), [Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/), [Kyverno](https://kyverno.io/docs/), [Gatekeeper](https://open-policy-agent.github.io/gatekeeper/website/docs/howto/).

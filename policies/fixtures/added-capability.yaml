@@ -1,0 +1,30 @@
+apiVersion: "v1"
+kind: "Pod"
+metadata:
+  name: "added-capability"
+  namespace: "devsecops-reference"
+  labels:
+    app: "sample-api"
+spec:
+  automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    seccompProfile:
+      type: "RuntimeDefault"
+  containers:
+    -
+      name: "sample-api"
+      image: "devsecops-reference:local"
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - "ALL"
+          add:
+            - "NET_RAW"
+      resources:
+        limits:
+          cpu: "250m"
+          memory: "128Mi"

@@ -1,50 +1,18 @@
-# Resource Index
+# Resource index
 
-Curated tools and references by category.
+Use [tool comparisons](tool-comparison.md) to make a selection and the [catalog](awesome-catalog.md) to discover alternatives. Exact reference versions and execution scope are in [tool-versions.json](../tool-versions.json) and [validation criteria](validation.md).
 
-Also see: [Tool Comparison](tool-comparison.md) and [Case Studies](case-studies.md).
+| Learning need | Official starting point | Apply it here |
+| --- | --- | --- |
+| Secure-development practices | [NIST SSDF](https://csrc.nist.gov/projects/ssdf), [OWASP SAMM](https://owaspsamm.org/model/) | Control catalog and domain maturity assessment. |
+| Threat modeling | [OWASP threat modeling](https://owasp.org/www-community/Threat_Modeling) | Worked sample architecture and assumptions. |
+| Source-rule feedback | [Semgrep docs](https://semgrep.dev/docs/), [pre-commit](https://pre-commit.com/) | Lab 01 shared configuration and fixtures. |
+| CI trust | [GitHub Actions security](https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions) | Lab 02 permissions, required checks, and failure evidence. |
+| Package inventory | [Syft docs](https://oss.anchore.com/docs/), [CycloneDX format](https://cyclonedx.org/) | Lab 03 image inventory; generator and standard are separate. |
+| Artifact verification | [Sigstore](https://docs.sigstore.dev/), [SLSA](https://slsa.dev/spec/v1.2/build-track-basics) | Identity verification and build-trust reasoning. |
+| API controls | [OWASP authorization](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html), [OpenAPI](https://spec.openapis.org/oas/latest.html) | Lab 06 expected owner/route behavior. |
+| Deployment security | [Kubernetes security](https://kubernetes.io/docs/concepts/security/), [Kyverno](https://kyverno.io/docs/) | Lab 04 policy behavior and optional admission. |
+| Runtime signals | [Falco setup](https://falco.org/docs/setup/), [OpenTelemetry](https://opentelemetry.io/docs/) | Separate sensor prerequisites from offline detection tests. |
+| Response/evidence | [OWASP logging](https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html) | Lab 07 sanitized evidence and recovery decisions. |
 
-## Shift Left
-
-- Secrets: [Gitleaks](https://github.com/gitleaks/gitleaks), [Talisman](https://github.com/thoughtworks/talisman)
-- Pre-commit: [pre-commit](https://pre-commit.com/)
-- IDE security: [Snyk IDE](https://snyk.io/), [SonarLint](https://www.sonarlint.org/)
-
-## SAST and Code Quality
-
-- SAST: [Semgrep](https://semgrep.dev/), [CodeQL](https://codeql.github.com/), [SonarQube](https://www.sonarqube.org/)
-
-## SCA and Supply Chain
-
-- SCA: [Trivy](https://github.com/aquasecurity/trivy), [Snyk](https://snyk.io/)
-- SBOM: [Syft](https://github.com/anchore/syft), [CycloneDX](https://cyclonedx.org/)
-- Signing: [Cosign](https://github.com/sigstore/cosign), [in-toto](https://in-toto.io/)
-- Provenance: [SLSA](https://slsa.dev/)
-
-## IaC and Policy
-
-- IaC scanning: [Checkov](https://www.checkov.io/), [KICS](https://kics.io/)
-- Policy as code: [OPA](https://www.openpolicyagent.org/), [Gatekeeper](https://open-policy-agent.github.io/gatekeeper/), [Kyverno](https://kyverno.io/)
-
-## DAST and API Security
-
-- DAST: [OWASP ZAP](https://www.zaproxy.org/), [Nuclei](https://github.com/projectdiscovery/nuclei)
-- API security: [42Crunch](https://42crunch.com/), [OpenAPI](https://www.openapis.org/)
-
-## Runtime and IR
-
-- Runtime detection: [Falco](https://falco.org/)
-- Observability: [OpenTelemetry](https://opentelemetry.io/), [Prometheus](https://prometheus.io/)
-- IR platforms: [TheHive](https://thehive-project.org/), [PagerDuty](https://www.pagerduty.com/)
-
-## Real-world Examples
-
-- [GitHub Actions starter workflows](https://github.com/actions/starter-workflows)
-- [Semgrep rules](https://github.com/semgrep/semgrep-rules)
-- [Trivy examples](https://github.com/aquasecurity/trivy)
-- [Syft + Grype examples](https://github.com/anchore/syft)
-- [Cosign examples](https://github.com/sigstore/cosign)
-- [Kyverno policy library](https://github.com/kyverno/policies)
-- [OPA Gatekeeper library](https://github.com/open-policy-agent/gatekeeper-library)
-- [Falco rules](https://github.com/falcosecurity/rules)
-- [OpenTelemetry demo](https://github.com/open-telemetry/opentelemetry-demo)
+A successful link is not proof of current maintenance or suitability. Record your adopted version, operating model, license/cost, supported inputs, owner, and last validation. [Illustrative scenarios](case-studies.md) show planning tradeoffs without claiming measured customer results.

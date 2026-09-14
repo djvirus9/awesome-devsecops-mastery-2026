@@ -1,183 +1,73 @@
-# 🛡️ The Ultimate End-to-End DevSecOps Roadmap (2026)
+# Awesome DevSecOps Mastery 2026
 
-[![Awesome](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38/badge.svg)](https://github.com/sindresorhus/awesome)
-![Maintained](https://img.shields.io/badge/Maintained%3F-yes-green.svg)
-![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
+[![Reference checks](https://github.com/djvirus9/awesome-devsecops-mastery-2026/actions/workflows/devsecops-golden-pipeline.yml/badge.svg)](https://github.com/djvirus9/awesome-devsecops-mastery-2026/actions/workflows/devsecops-golden-pipeline.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> **"Security is not a gated process; it is a continuous thread."**
-> This is a comprehensive, stage-by-stage guide to building a modern DevSecOps pipeline—from the first line of code to production runtime.
+Learn DevSecOps by taking one small API from local checks through build evidence, deployment policy, detection, and incident recovery. This repository combines an executable local reference path with optional environment exercises and a curated resource library.
 
----
+Start with the [foundation setup](docs/foundation.md). The [validation matrix](docs/validation.md) distinguishes local checks, CI checks, and exercises needing a registry, cluster, or identity provider. Adopting these learning examples for a service requires its own threat model and deployment review.
 
-## Who This Is For
+## Quick start
 
-- Beginners: guided labs, curated tools, and clear adoption order
-- Practitioners: production-ready controls, metrics, and templates
-- DevOps/SRE/Security: a shared source of truth across disciplines
+Prerequisites: Git, Make, Python 3.12 or newer, and a POSIX shell on Linux, macOS, or Windows through WSL. Allow 10–15 minutes after installing prerequisites; full labs take longer.
 
-## Quick Start (10 minutes)
+```bash
+git clone https://github.com/djvirus9/awesome-devsecops-mastery-2026.git
+cd awesome-devsecops-mastery-2026
+make setup
+make test
+make validate
+API_TOKENS_JSON='{"demo-alice-token":"alice","demo-bob-token":"bob"}' make run
+```
 
-- Read the overview: [docs/README.md](docs/README.md)
-- Run the first lab: [labs/README.md](labs/README.md)
-- Align on SLAs: [templates/vuln-sla-matrix.md](templates/vuln-sla-matrix.md)
-- See the pipeline example: [pipelines/github-actions/devsecops.yml](pipelines/github-actions/devsecops.yml)
+In another terminal:
 
-## Golden Path
+```bash
+DEMO_ALICE_TOKEN='demo-alice-token'
+curl --fail http://127.0.0.1:8080/health
+curl --fail -H "Authorization: Bearer $DEMO_ALICE_TOKEN" http://127.0.0.1:8080/v1/items
+```
 
-Recommended stack and order of adoption:
+Expect a healthy response and Alice's synthetic items. Tokens above are public demonstration values for this local exercise. Stop the server with Ctrl+C. See the [sample API](samples/sample-api/README.md) for its contract, tests, container setup, and limitations.
 
-1. Shift-left hygiene: pre-commit + SAST ([Gitleaks](https://github.com/gitleaks/gitleaks), [Semgrep](https://semgrep.dev/))
-2. CI PR gates: required checks + SCA ([GitHub Actions](https://docs.github.com/actions) + [Trivy](https://github.com/aquasecurity/trivy))
-3. Supply chain: SBOM + signing ([Syft](https://github.com/anchore/syft) + [Cosign](https://github.com/sigstore/cosign))
-4. DAST/API: staging scans ([OWASP ZAP](https://www.zaproxy.org/))
-5. CD & K8s: policy-as-code ([Kyverno](https://kyverno.io/))
-6. Runtime detection: eBPF alerts ([Falco](https://falco.org/))
-7. IR + detections: runbooks and tuning
+## Seven phases, one reference application
 
-## Lab Navigation
+Follow phase order. Existing lab folder numbers are retained so published links keep working: Phase 4 → Lab 06, Phase 5 → Lab 04, Phase 6 → Lab 05.
 
-- [Lab 01: Pre-commit SAST](labs/lab-01-precommit-sast/README.md)
-- [Lab 02: CI PR Gates](labs/lab-02-ci-pr-gates/README.md)
-- [Lab 03: SBOM and Signing](labs/lab-03-sbom-signing/README.md)
-- [Lab 04: K8s Admission Policies](labs/lab-04-k8s-admission-policies/README.md)
-- [Lab 05: Runtime Detection](labs/lab-05-runtime-detection/README.md)
-- [Lab 06: DAST and API Testing](labs/lab-06-dast-api-testing/README.md)
-- [Lab 07: IR and Detections](labs/lab-07-ir-detections/README.md)
+| Phase | Exercise | Evidence of completion |
+| --- | --- | --- |
+| 1. Shift left | [Lab 01: local checks](labs/lab-01-precommit-sast/README.md) | Tests and source rules pass; a harmless failing fixture is detected. |
+| 2. CI and PR gates | [Lab 02: enforced checks](labs/lab-02-ci-pr-gates/README.md) | Real checks execute; required checks are verified in a practice repository. |
+| 3. Supply chain | [Lab 03: SBOM and signing](labs/lab-03-sbom-signing/README.md) | Image inventory and retained signature bundle can be verified against an expected identity. |
+| 4. API validation | [Lab 06: API regression tests](labs/lab-06-dast-api-testing/README.md) | Missing credentials and cross-owner requests are denied; expected access passes. |
+| 5. CD and Kubernetes | [Lab 04: admission policies](labs/lab-04-k8s-admission-policies/README.md) | Fixtures prove allowed and denied cases; cluster validation is recorded separately. |
+| 6. Runtime detection | [Lab 05: telemetry and detection](labs/lab-05-runtime-detection/README.md) | Synthetic events produce expected alerts and reveal a telemetry gap. |
+| 7. Incident response | [Lab 07: response tabletop](labs/lab-07-ir-detections/README.md) | Decisions, recovery checks, timings, and follow-up ownership are recorded. |
 
-## Key Docs
+AI-assisted remediation is an [optional advanced specialization](skill-maps/advanced.md), with human review and test evidence. Phase 7 is incident response throughout this repository.
 
-- Program overview: [docs/README.md](docs/README.md)
-- Reference architecture: [docs/reference-architecture.md](docs/reference-architecture.md)
-- Maturity model: [docs/maturity-model.md](docs/maturity-model.md)
-- Metrics and KPIs: [docs/metrics.md](docs/metrics.md)
-- Learning paths: [docs/learning-paths.md](docs/learning-paths.md)
-- Resource index: [docs/resources.md](docs/resources.md)
-- Tool comparison: [docs/tool-comparison.md](docs/tool-comparison.md)
-- Case studies: [docs/case-studies.md](docs/case-studies.md)
-- Cheatsheets: [docs/cheatsheets.md](docs/cheatsheets.md)
-- Awesome catalog: [docs/awesome-catalog.md](docs/awesome-catalog.md)
-- Glossary: [docs/glossary.md](docs/glossary.md)
+## Choose your path
 
-## Practical Assets
+| Starting point | Outcome |
+| --- | --- |
+| [Foundation](docs/foundation.md) | Run the application and identify its trust boundaries. |
+| [Beginner](skill-maps/beginner.md) | Produce local checks, a meaningful merge gate, and an SBOM. |
+| [Intermediate](skill-maps/intermediate.md) | Connect API tests, policy enforcement, and detection evidence. |
+| [Advanced](skill-maps/advanced.md) | Review release trust, exceptions, and recovery as an integrated system. |
+| [Role paths](docs/learning-paths.md) | Developer, platform, AppSec, SRE, and program-owner deliverables. |
 
-- Project blueprints: [projects/README.md](projects/README.md)
-- Ready configs: [configs/README.md](configs/README.md)
-- Operational checklists: [checklists/README.md](checklists/README.md)
-- Incident playbooks: [playbooks/README.md](playbooks/README.md)
-- Policy packs: [policies/README.md](policies/README.md)
-- Metrics dashboards: [dashboards/README.md](dashboards/README.md)
-- Repo templates: [repo-templates/README.md](repo-templates/README.md)
-- Skill maps: [skill-maps/README.md](skill-maps/README.md)
-- Secure SDLC checklists: [sdlc-checklists/README.md](sdlc-checklists/README.md)
-- Sample repos: [samples/README.md](samples/README.md)
-- Integration guides: [integrations/README.md](integrations/README.md)
-- Security testing recipes: [recipes/README.md](recipes/README.md)
-- Incident metrics templates: [metrics-templates/README.md](metrics-templates/README.md)
-- Maturity scorecards: [scorecards/README.md](scorecards/README.md)
-- Evidence packs: [evidence-packs/README.md](evidence-packs/README.md)
+The [microservice capstone](projects/microservice-api/README.md) connects the exercises. Its [architecture and threat model](docs/reference-architecture.md) explains why each control exists.
 
-## Real-world Examples
+## Practical assets
 
-- [GitHub Actions starter workflows](https://github.com/actions/starter-workflows)
-- [Semgrep rules](https://github.com/semgrep/semgrep-rules)
-- [Trivy examples](https://github.com/aquasecurity/trivy)
-- [Syft + Grype examples](https://github.com/anchore/syft)
-- [Cosign examples](https://github.com/sigstore/cosign)
-- [Kyverno policy library](https://github.com/kyverno/policies)
-- [OPA Gatekeeper library](https://github.com/open-policy-agent/gatekeeper-library)
-- [Falco rules](https://github.com/falcosecurity/rules)
-- [OpenTelemetry demos](https://github.com/open-telemetry/opentelemetry-demo)
+- Learning: [docs](docs/README.md), [roadmap](docs/roadmap.md), [labs](labs/README.md), [skill maps](skill-maps/README.md), [project extensions](projects/README.md).
+- Implementation: [samples](samples/README.md), [CI examples](pipelines/), [configurations](configs/README.md), [policies](policies/README.md), [repository templates](repo-templates/README.md), [integrations](integrations/README.md), [recipes](recipes/README.md).
+- Operations: [control catalog](templates/control-catalog.md), [checklists](checklists/README.md), [SDLC checklists](sdlc-checklists/README.md), [playbooks](playbooks/README.md), [exceptions](templates/security-exception-template.md).
+- Evidence: [worked release record](evidence-packs/example-release.md), [metrics](docs/metrics.md), [datasets](metrics-templates/README.md), [dashboards](dashboards/README.md), [maturity rubric](scorecards/maturity-scorecard.md).
+- References: [tool comparison](docs/tool-comparison.md), [catalog](docs/awesome-catalog.md), [cheatsheets](docs/cheatsheets.md), [glossary](docs/glossary.md), [illustrative scenarios](docs/case-studies.md).
 
----
+## Contributing and maintenance
 
-## 🧭 Roadmap Navigation
+Read [CONTRIBUTING.md](CONTRIBUTING.md), run local checks, and include commands, supported versions, expected results, and limitations for a new example. Tool names alone do not establish a working control. The workflow badge links to execution evidence; optional cloud and cluster exercises require their own validation record.
 
-- [🔄 Phase 1: Shift Left (IDE & Pre-Commit)](#-phase-1-shift-left-ide--pre-commit)
-- [🏗️ Phase 2: CI Security (Build & Static Analysis)](#-phase-2-ci-security-build--static-analysis)
-- [📦 Phase 3: Supply Chain (SBOM & Artifacts)](#-phase-3-supply-chain-sbom--artifacts)
-- [🌐 Phase 4: DAST & Application Testing](#-phase-4-dast--application-testing)
-- [☸️ Phase 5: CD & Infrastructure (Cloud/K8s)](#-phase-5-cd--infrastructure-cloudk8s)
-- [🕵️ Phase 6: Runtime & Threat Detection](#-phase-6-runtime--threat-detection)
-- [🤖 Phase 7: AI-Driven Remediation (2026 Trend)](#-phase-7-ai-driven-remediation-2026-trend)
-
----
-
-## 🔄 Phase 1: Shift Left (IDE & Pre-Commit)
-
-*Goal: Catch vulnerabilities and secrets before they are even pushed to Git.*
-
-- **[Gitleaks](https://github.com/gitleaks/gitleaks)**: Prevent hardcoded secrets (API keys, passwords) from being committed.
-- **[Talisman](https://github.com/thoughtworks/talisman)**: A hook to scan outgoing changes for sensitive information.
-- **[Pre-commit](https://pre-commit.com/)**: A framework for managing multi-language git hooks.
-- **[Snyk IDE Plugin](https://snyk.io/)**: Real-time vulnerability feedback inside VS Code/JetBrains.
-
-## 🏗️ Phase 2: CI Security (Build & Static Analysis)
-
-*Goal: Automate code quality and vulnerability checks on every PR.*
-
-- **SAST (Static Analysis)**:
-  - **[Semgrep](https://semgrep.dev/)**: Ultra-fast, customizable static analysis.
-  - **[SonarQube](https://www.sonarqube.org/)**: Comprehensive code health and security monitoring.
-- **IaC Scanning (Infrastructure as Code)**:
-  - **[Checkov](https://www.checkov.io/)**: Policy-as-code for Terraform, CloudFormation, and K8s.
-  - **[KICS](https://kics.io/)**: Find security vulnerabilities and compliance issues in IaC.
-
-## 📦 Phase 3: Supply Chain (SBOM & Artifacts)
-
-*Goal: Secure your "Ingredients list" and ensure dependency integrity.*
-
-- **SCA (Dependency Scanning)**:
-  - **[Trivy](https://github.com/aquasecurity/trivy)**: Scans packages, OS libraries, and configurations.
-- **SBOM Management**:
-  - **[Syft](https://github.com/anchore/syft)** / **[Grype](https://github.com/anchore/grype)**: Generate and scan Software Bill of Materials.
-- **Signature & Trust**:
-  - **[Sigstore/Cosign](https://github.com/sigstore/cosign)**: Keyless signing to verify image provenance.
-
-## 🌐 Phase 4: DAST & Application Testing
-
-*Goal: Identify vulnerabilities in the running application (Dynamic Analysis).*
-
-- **[OWASP ZAP](https://www.zaproxy.org/)**: World's most popular free DAST tool.
-- **[Nuclei](https://github.com/projectdiscovery/nuclei)**: Template-based scanning for fast vulnerability detection.
-- **[42Crunch](https://42crunch.com/)**: Dedicated security for APIs (REST/GraphQL).
-
-## ☸️ Phase 5: CD & Infrastructure (Cloud/K8s)
-
-*Goal: Secure deployment and cloud configuration.*
-
-- **[Kyverno](https://kyverno.io/)**: Kubernetes admission controller to block non-compliant pods.
-- **[Prowler](https://github.com/prowler-cloud/prowler)**: AWS, Azure, and GCP security assessment and hardening.
-- **[ArgoCD](https://argoproj.github.io/cd/)**: Secure GitOps deployments with drift detection.
-
-## 🕵️ Phase 6: Runtime & Threat Detection
-
-*Goal: Observe behavior in production and block attacks.*
-
-- **[Falco](https://falco.org/)**: The surveillance camera for Kubernetes (eBPF-powered).
-- **[Trivy Operator](https://github.com/aquasecurity/trivy-operator)**: Continuous security scanning inside your cluster.
-- **[Istio](https://istio.io/)**: Service mesh to enforce mTLS and zero-trust networking.
-
-## 🤖 Phase 7: AI-Driven Remediation (2026 Trend)
-
-*Goal: Move from "Finding" to "Fixing" automatically.*
-
-- **[Plexicus](https://www.plexicus.ai/)**: AI agents that generate fix PRs for your security findings.
-- **[Jit](https://www.jit.io/)**: Orchestrate your entire security stack in one developer-friendly portal.
-- **[Mend.io](https://www.mend.io/)**: Automated patching of vulnerable open-source libraries.
-
----
-
-## Repository Structure
-
-- [docs](docs/README.md)
-- [labs](labs/README.md)
-- [templates](templates/)
-- [pipelines](pipelines/)
-
-## 🤝 Contributing
-
-Contributions are welcome! If you have a tool or resource that fits the 2026 DevSecOps landscape, please open a PR.
-
-## 📜 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
+The 2026 edition is a rolling learning resource. Record tool upgrades and validation changes in pull requests; see the [validation and release criteria](docs/validation.md). Report security issues through [SECURITY.md](SECURITY.md). Distributed under the [MIT License](LICENSE).

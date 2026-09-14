@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.py[cod]
+.DS_Store
+.env
+.cache/
+.tools/
+reports/
+*.sigstore.json
+cosign.key
+cosign.pub
+

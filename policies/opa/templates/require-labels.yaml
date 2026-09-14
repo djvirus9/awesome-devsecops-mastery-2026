@@ -1,0 +1,32 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8srequiredlabels
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRequiredLabels
+      validation:
+        openAPIV3Schema:
+          type: object
+          required: [labels]
+          properties:
+            labels:
+              type: array
+              minItems: 1
+              items:
+                type: string
+                minLength: 1
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8srequiredlabels
+
+        violation[{"msg": msg}] {
+          key := input.parameters.labels[_]
+          labels := object.get(input.review.object.metadata, "labels", {})
+          value := object.get(labels, key, "")
+          trim_space(value) == ""
+          msg := sprintf("non-empty label %q is required", [key])
+        }

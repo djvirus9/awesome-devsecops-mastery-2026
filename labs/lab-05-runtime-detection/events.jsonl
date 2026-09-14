@@ -1,0 +1,8 @@
+{"timestamp":"2026-09-15T12:00:00Z","service":"sample-api","kind":"heartbeat"}
+{"timestamp":"2026-09-15T12:00:05Z","service":"sample-api","kind":"access_allowed","subject":"bob","request_id":"demo-1"}
+{"timestamp":"2026-09-15T12:00:10Z","service":"sample-api","kind":"access_denied","subject":"alice","request_id":"demo-2"}
+{"timestamp":"2026-09-15T12:00:30Z","service":"sample-api","kind":"access_denied","subject":"alice","request_id":"demo-3"}
+{"timestamp":"2026-09-15T12:01:00Z","service":"sample-api","kind":"access_denied","subject":"alice","request_id":"demo-4"}
+{"timestamp":"2026-09-15T12:01:00Z","service":"sample-api","kind":"access_denied","subject":"alice","request_id":"demo-4"}
+{"timestamp":"2026-09-15T12:01:20Z","service":"sample-api","kind":"access_allowed","subject":"bob","request_id":"demo-5"}
+{"timestamp":"2026-09-15T12:02:00Z","service":"sample-api","kind":"heartbeat"}

@@ -1,29 +1,13 @@
-# Phase 01: Shift Left
+# Phase 1: shift left
 
-## Goals
+Connect requirements to fast developer feedback. Start with the [worked threat model](../reference-architecture.md): identities and ownership, credential handling, and trusted build changes are distinct concerns.
 
-- Catch secrets and common flaws before code leaves a laptop
-- Make secure defaults the path of least resistance
+## Implement and verify
 
-## Practices
+Use [Lab 01](../../labs/lab-01-precommit-sast/README.md) to run shared source rules and a harmless positive/negative fixture. Keep one reviewed rule file for local and CI execution. Hooks improve feedback speed but can be skipped, so [Phase 2](02-ci-pr-gates.md) repeats enforcement in CI.
 
-- Pre-commit hooks for secrets and SAST
-- Secure coding guidelines and training
-- IDE-integrated feedback
+The developer owns code corrections and tests; AppSec owns rule intent and scoped triage. Never put real credentials in fixtures. Secret removal, credential revocation/rotation, evidence handling, and downstream consumer recovery are separate steps.
 
-## Tools
+Definition of done: sample tests pass; a supplied harmless fixture triggers the named rule; its corrected case passes; the learner explains coverage and suppression scope. Store command/version/commit and results. See the [control catalog](../../templates/control-catalog.md) and [secure SDLC checklists](../../sdlc-checklists/README.md).
 
-- Secrets scanning: [Gitleaks](https://github.com/gitleaks/gitleaks), [Talisman](https://github.com/thoughtworks/talisman)
-- Pre-commit framework: [pre-commit](https://pre-commit.com/)
-- SAST: [Semgrep](https://semgrep.dev/)
-- IDE security: [Snyk IDE](https://snyk.io/)
-
-## Deliverables
-
-- `.pre-commit-config.yaml` baseline
-- Secure coding checklist
-- Local SAST profile
-
-## Lab
-
-- [Lab 01: Pre-commit SAST](../../labs/lab-01-precommit-sast/README.md)
+Official references: [pre-commit](https://pre-commit.com/), [Semgrep documentation](https://semgrep.dev/docs/), [OWASP secrets management](https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html).

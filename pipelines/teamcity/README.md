@@ -1,37 +1,26 @@
-# TeamCity Pipeline
+# TeamCity adaptation
 
-Reference steps to implement DevSecOps checks in TeamCity.
+This is a platform adaptation guide; the maintained execution reference is [GitHub Actions](../../.github/workflows/devsecops-golden-pipeline.yml). No TeamCity server or agent was used to validate it. Keep the repository's scripts, configs, policies and samples together.
 
-## Build Steps (Example)
+## Agent and build configuration
 
-1. Checkout code
-2. SAST (Semgrep)
-3. SCA (Trivy)
-4. SBOM (Syft)
-5. Signing (Cosign)
-6. Publish artifacts
+Use an isolated Linux x86_64 agent with Python 3.12+, Git, Make and Docker. Check out the exact source revision, install the [pinned tools](../../tool-versions.json) with `python3 scripts/install_tool.py syft trivy gitleaks kyverno gator cosign`, and put `.tools/bin` on the build's PATH. Install the declared Semgrep version from its reviewed distribution. Run from the checkout root:
 
-## Example Commands
+```bash
+make setup
+make test validate
+make sast
+make policy-test
+.tools/bin/gitleaks dir . --redact --no-banner --report-format json --report-path reports/gitleaks.json
+.tools/bin/trivy fs --config configs/trivy.yaml --format json --output reports/trivy.json .
+make container container-test sbom
+.tools/bin/trivy image --config configs/trivy.yaml --scanners vuln --format json --output reports/image-scan.json devsecops-reference:local
+```
 
-- SAST:
-  ```bash
-  semgrep ci --config p/ci
-  ```
-- SCA:
-  ```bash
-  trivy fs --severity CRITICAL,HIGH --ignore-unfixed .
-  ```
-- SBOM:
-  ```bash
-  syft dir:. -o cyclonedx-json > sbom.json
-  ```
-- Signing:
-  ```bash
-  COSIGN_EXPERIMENTAL=1 cosign sign-blob --yes --output-signature sbom.sig sbom.json
-  ```
+Configure build failure on every nonzero command and publish `reports/**` on failure as well as success, with a retention period. Use a snapshot dependency to promote the same validated build revision; a green build label alone is not proof of those dependencies. Compare a controlled failing rule fixture and its correction before adopting the gate.
 
-## Notes
+## Signing and release
 
-- Store SBOMs and signatures as artifacts
-- Gate promotions on verified signatures
-- Track policy exceptions using [templates/security-exception-template.md](../../templates/security-exception-template.md)
+The [signing lab](../../labs/lab-03-sbom-signing/README.md) preserves a bundle and constrains verification identity/issuer. TeamCity needs its own supported identity provider or managed signing key; GitHub/GitLab identity tokens do not appear automatically on a TeamCity agent. Configure that integration explicitly and require verified signatures before promotion. Do not run interactive signing in an unattended job or mark a missing signer successful.
+
+The [manual GitHub release implementation](../../.github/workflows/release.yml) is an example of digest-linked image inventory, signing, provenance and verification. Adapting it requires registry credentials with scoped permissions, an expected TeamCity signer, equivalent provenance checks, and a tested rollback path. Record platform validation in the [evidence pack](../../evidence-packs/README.md).

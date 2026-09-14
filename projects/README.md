@@ -1,7 +1,11 @@
-# Hands-on Projects
+# Projects
 
-End-to-end project blueprints you can implement in your own repos.
+The [microservice reference capstone](microservice-api/README.md) connects the supplied API, tests, workflows, policy fixtures, synthetic telemetry, and response exercise. Start there before adapting a new platform.
 
-- [Microservice API Security Project](microservice-api/README.md)
-- [K8s GitOps Security Project](k8s-gitops/README.md)
-- [Serverless Pipeline Security Project](serverless-pipeline/README.md)
+| Project | Status and completion boundary |
+| --- | --- |
+| [Microservice API](microservice-api/README.md) | Implemented local reference plus explicit CI/registry/cluster validation steps. |
+| [Kubernetes GitOps](k8s-gitops/README.md) | Optional deployment extension; requires its stated cluster/controller and environment evidence. |
+| [Serverless](serverless-pipeline/README.md) | Design exercise with provider-specific implementation criteria; no provisioned cloud function. |
+
+Use [validation criteria](../docs/validation.md) and a [worked evidence record](../evidence-packs/example-release.md). A design blueprint is not a completed deployed service.

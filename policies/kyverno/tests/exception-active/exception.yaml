@@ -1,0 +1,19 @@
+apiVersion: "policies.kyverno.io/v1"
+kind: "PolicyException"
+metadata:
+  name: "reference-limits-exercise"
+  namespace: "policy-exceptions"
+  annotations:
+    devsecops.example/purpose: "Offline fixture only; never apply this test exception."
+spec:
+  expiresAt: "2099-01-01T00:00:00Z"
+  policyRefs:
+    -
+      name: "require-resource-limits"
+      kind: "ValidatingPolicy"
+  matchConditions:
+    - name: not-expired
+      expression: time.now() < timestamp('2099-01-01T00:00:00Z')
+    -
+      name: "exact-local-pod"
+      expression: "object.kind == 'Pod' && object.metadata.namespace == 'devsecops-reference' && object.metadata.name == 'missing-limits'"

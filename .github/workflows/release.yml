@@ -1,0 +1,94 @@
+name: Publish verified reference image
+
+# Manual publishing only. This workflow never runs for a pull request.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-reference-image
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/devsecops-golden-pipeline.yml
+
+  publish:
+    name: Publish and verify release
+    if: github.ref == 'refs/heads/main'
+    needs: checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    env:
+      IMAGE: ghcr.io/${{ github.repository }}/sample-api
+      EXPECTED_IDENTITY: https://github.com/${{ github.repository }}/.github/workflows/release.yml@refs/heads/main
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: python3 scripts/install_tool.py syft trivy cosign
+      - name: Build and scan the exact image to publish
+        run: |
+          mkdir -p reports
+          docker build --pull -t "$IMAGE:$GITHUB_SHA" samples/sample-api
+          python3 scripts/container_smoke.py --image "$IMAGE:$GITHUB_SHA"
+          .tools/bin/trivy image --config configs/trivy.yaml --scanners vuln --format json --output reports/release-scan.json "$IMAGE:$GITHUB_SHA"
+      - name: Authenticate registry
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+      - name: Publish and record immutable digest
+        id: image
+        run: |
+          docker push "$IMAGE:$GITHUB_SHA"
+          docker image inspect "$IMAGE:$GITHUB_SHA" > reports/published-image.json
+          python3 - <<'PY'
+          import json, os, re
+          image = json.load(open('reports/published-image.json', encoding='utf-8'))[0]
+          prefix = os.environ['IMAGE'] + '@sha256:'
+          refs = [ref for ref in image['RepoDigests'] if ref.startswith(prefix)]
+          if len(refs) != 1 or not re.fullmatch(r'sha256:[0-9a-f]{64}', refs[0].split('@')[1]):
+              raise SystemExit('Expected exactly one immutable published image digest')
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
+              output.write('reference=' + refs[0] + '\n')
+              output.write('digest=' + refs[0].split('@')[1] + '\n')
+          PY
+      - name: Inventory, sign, and verify release
+        env:
+          IMAGE_REFERENCE: ${{ steps.image.outputs.reference }}
+        run: |
+          .tools/bin/syft --config configs/syft.yaml "registry:$IMAGE_REFERENCE" -o cyclonedx-json=reports/sbom.cdx.json
+          .tools/bin/cosign sign --yes "$IMAGE_REFERENCE"
+          .tools/bin/cosign verify --certificate-identity "$EXPECTED_IDENTITY" --certificate-oidc-issuer https://token.actions.githubusercontent.com "$IMAGE_REFERENCE" > reports/image-verification.json
+          .tools/bin/cosign sign-blob --yes --bundle reports/sbom.sigstore.json reports/sbom.cdx.json
+          .tools/bin/cosign verify-blob --bundle reports/sbom.sigstore.json --certificate-identity "$EXPECTED_IDENTITY" --certificate-oidc-issuer https://token.actions.githubusercontent.com reports/sbom.cdx.json
+      - name: Generate build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.image.outputs.digest }}
+          push-to-registry: true
+          create-storage-record: false
+      - name: Verify provenance for the expected release workflow
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE_REFERENCE: ${{ steps.image.outputs.reference }}
+        run: gh attestation verify "oci://$IMAGE_REFERENCE" --repo "$GITHUB_REPOSITORY" --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release.yml" --source-digest "$GITHUB_SHA" --source-ref refs/heads/main --cert-identity "$EXPECTED_IDENTITY" --deny-self-hosted-runners --format json > reports/provenance-verification.json
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: release-evidence
+          path: reports/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Clear registry session
+        if: always()
+        run: docker logout ghcr.io

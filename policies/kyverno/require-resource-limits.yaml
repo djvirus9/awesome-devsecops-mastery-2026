@@ -1,20 +1,42 @@
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
 metadata:
   name: require-resource-limits
 spec:
-  validationFailureAction: enforce
-  rules:
-    - name: require-limits
-      match:
-        resources:
-          kinds: [Pod]
-      validate:
-        message: "CPU and memory limits are required."
-        pattern:
-          spec:
-            containers:
-              - resources:
-                  limits:
-                    cpu: "*"
-                    memory: "*"
+  validationActions: [Audit, Warn]
+  failurePolicy: Fail
+  evaluation:
+    background:
+      enabled: true
+  autogen:
+    podControllers:
+      controllers: []
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [pods, pods/ephemeralcontainers]
+      - apiGroups: [apps]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [deployments, statefulsets, daemonsets, replicasets]
+      - apiGroups: [batch]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [jobs, cronjobs]
+  matchConditions:
+    - name: reference-namespace
+      expression: request.namespace == 'devsecops-reference'
+  variables:
+    - name: podSpec
+      expression: "object.kind == 'Pod' ? object.spec : (object.kind == 'CronJob' ? object.spec.jobTemplate.spec.template.spec : object.spec.template.spec)"
+    - name: containers
+      # Kubernetes forbids resources on ephemeral containers.
+      expression: variables.podSpec.containers + variables.podSpec.?initContainers.orValue([])
+  validations:
+    - expression: >-
+        variables.containers.all(c,
+          quantity(c.?resources.?limits[?'cpu'].orValue('0')).isGreaterThan(quantity('0')) &&
+          quantity(c.?resources.?limits[?'memory'].orValue('0')).isGreaterThan(quantity('0')))
+      message: Every regular and init container needs positive CPU and memory limits; ephemeral containers cannot specify resources.

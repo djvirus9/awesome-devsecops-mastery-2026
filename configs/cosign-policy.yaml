@@ -1,12 +1,16 @@
-apiVersion: policy.sigstore.dev/v1alpha1
+apiVersion: policy.sigstore.dev/v1beta1
 kind: ClusterImagePolicy
 metadata:
   name: require-cosign-signature
 spec:
   images:
-    - glob: "ghcr.io/*"
+    - glob: "ghcr.io/djvirus9/awesome-devsecops-mastery-2026/sample-api:*"
+    - glob: "ghcr.io/djvirus9/awesome-devsecops-mastery-2026/sample-api@sha256:*"
   authorities:
     - keyless:
         url: "https://fulcio.sigstore.dev"
         identities:
           - issuer: "https://token.actions.githubusercontent.com"
+            subject: "https://github.com/djvirus9/awesome-devsecops-mastery-2026/.github/workflows/release.yml@refs/heads/main"
+      ctlog:
+        url: "https://rekor.sigstore.dev"
