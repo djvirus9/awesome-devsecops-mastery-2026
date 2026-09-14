@@ -74,7 +74,7 @@ The Service is ClusterIP only. The workload runs as UID/GID 10001, drops all cap
 bash projects/k8s-gitops/check-network.sh
 ```
 
-This replaces only the two named local test Jobs. A same-namespace client labelled `access: sample-api` must reach `/health`; the unlabelled client must resolve DNS successfully but time out connecting. Both Jobs must complete and print `PASS`. The API has no egress allowance because it needs no external service. NetworkPolicy uses pod labels as a policy boundary, so permission to create labelled Pods must be controlled separately. Port forwarding goes through the Kubernetes API and is not proof of CNI enforcement.
+This replaces only the two named local test Jobs. A same-namespace client labelled `access: sample-api` must reach `/health`; the unlabelled client must resolve DNS successfully but time out connecting. Both Jobs must complete and print `PASS`. The API has no egress allowance because it needs no external service. The manifest uses explicit `policyTypes: [Ingress, Egress]` with no `egress` field: this is the [documented deny-egress form](https://kubernetes.io/docs/concepts/services-networking/network-policies/#default-deny-all-egress-traffic). Omitting an empty list avoids generation-only drift caused by API serialization in the pinned version; it does not grant outbound traffic. NetworkPolicy uses pod labels as a policy boundary, so permission to create labelled Pods must be controlled separately. Port forwarding goes through the Kubernetes API and is not proof of CNI enforcement.
 
 ## Drift and rollback exercise
 

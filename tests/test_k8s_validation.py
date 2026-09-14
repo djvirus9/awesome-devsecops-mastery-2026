@@ -166,6 +166,19 @@ class K8sValidationTests(unittest.TestCase):
             self.assertIn('pods/ephemeralcontainers', matched)
             self.assertTrue(policy['spec']['evaluation']['background']['enabled'])
 
+    def test_networkpolicy_deny_egress_uses_api_canonical_no_rule_form(self):
+        policy = yaml.safe_load((ROOT / 'projects/k8s-gitops/base/network-policy.yaml').read_text())
+        spec = policy['spec']
+        self.assertEqual(spec['podSelector'], {'matchLabels': {'app': 'sample-api'}})
+        self.assertEqual(set(spec['policyTypes']), {'Ingress', 'Egress'})
+        # In v1.35.8, egress:[] is omitted on API read but reflect.DeepEqual
+        # distinguishes it from nil on update, producing generation-only drift.
+        # No egress key plus explicit Egress isolation still grants no outbound
+        # allowance. [{}] would instead allow everything and must not be added.
+        self.assertNotIn('egress', spec)
+        self.assertEqual(spec['ingress'], [{'from': [{'podSelector': {'matchLabels': {'access': 'sample-api'}}}],
+                                           'ports': [{'protocol': 'TCP', 'port': 8080}]}])
+
     def test_only_exact_reference_repository_digest_is_accepted(self):
         valid = "ghcr.io/djvirus9/awesome-devsecops-mastery-2026/sample-api@sha256:" + "a" * 64
         self.assertEqual(k8s.validate_image_reference(valid), valid)
