@@ -58,6 +58,20 @@ def kyverno_policies_ready(document, expected=POLICIES):
                     for obj in policies.values()))
 
 
+def exception_preserves_rendered_spec(rendered, persisted):
+    """Accept API-added defaults without allowing supplied intent to change."""
+    return all(persisted.get("spec", {}).get(key) == value for key, value in rendered["spec"].items())
+
+
+def exception_snapshot_unchanged(before, after):
+    """Compare canonical API state, not a manifest missing server defaults."""
+    initial, retained = before.get("metadata", {}), after.get("metadata", {})
+    return (bool(initial.get("uid")) and not retained.get("deletionTimestamp")
+            and all(key in initial and initial[key] == retained.get(key)
+                    for key in ("uid", "generation", "name", "namespace"))
+            and before.get("spec") == after.get("spec"))
+
+
 class Validation:
     def __init__(self):
         self.reference = validate_image_reference(os.getenv("IMAGE_REFERENCE", ""))
@@ -291,6 +305,10 @@ print('PASS: uid, capabilities, no-new-privileges, read-only root, writable tmp,
         self.wait_policies_ready((guard_name,))
         self.record("exception-deadline-guard-ready")
         self.apply_object("Apply bounded exception", exception)
+        initial = json.loads(self.kube("Snapshot admitted exception", "-n", "policy-exceptions", "get",
+            "policyexception.policies.kyverno.io", "reference-limits-exercise", "-o", "json").stdout)
+        if not exception_preserves_rendered_spec(exception, initial):
+            raise RuntimeError("Admitted exception changed explicitly rendered policy scope or expiry")
         self.admission("exception-exact-object", self.fixture("missing-limits"))
         self.admission("exception-does-not-cover-other-object", self.fixture("init-missing-limits"),
                        allowed=False, policy="require-resource-limits")
@@ -300,7 +318,7 @@ print('PASS: uid, capabilities, no-new-privileges, read-only root, writable tmp,
         self.admission("exception-expired-guard-denial", self.fixture("missing-limits"), allowed=False, policy=guard_name)
         retained = json.loads(self.kube("Exception retained after deadline", "-n", "policy-exceptions", "get",
             "policyexception.policies.kyverno.io", "reference-limits-exercise", "-o", "json").stdout)
-        if retained["spec"] != exception["spec"] or retained["metadata"].get("deletionTimestamp"):
+        if not exception_snapshot_unchanged(initial, retained):
             raise RuntimeError("Exception changed or was deleted before the deadline assertion")
         self.record("expired-exception-retained-without-refresh")
         corrected = yaml.safe_load(self.fixture("good").read_text())

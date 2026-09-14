@@ -86,6 +86,11 @@ class K8sValidationTests(unittest.TestCase):
         validation = object.__new__(k8s.Validation)
         exception = yaml.safe_load((ROOT / 'policies/kyverno/tests/exception-expired/exception.yaml').read_text())
         guard = renderer.deadline_guard(exception)
+        persisted = copy.deepcopy(exception)
+        # The live API defaults this field. Comparing to the submitted manifest
+        # previously failed despite successful, unchanged deadline enforcement.
+        persisted['spec']['reportResult'] = 'skip'
+        persisted['metadata'].update({'uid': 'local-test-uid', 'generation': 1})
         events = []
 
         def run(name, *args, **kwargs):
@@ -95,7 +100,7 @@ class K8sValidationTests(unittest.TestCase):
 
         def kube(name, *args, **kwargs):
             events.append(name)
-            return subprocess.CompletedProcess([], 0, json.dumps(exception))
+            return subprocess.CompletedProcess([], 0, json.dumps(persisted))
 
         def admission(name, manifest, **kwargs):
             events.append(name)
@@ -117,11 +122,37 @@ class K8sValidationTests(unittest.TestCase):
                     patch.object(validation, 'admission', side_effect=admission), patch.object(validation, 'record'):
                 validation.enforce_exception()
         ordered = ['Install deadline guard before granting exception', 'guard-ready', 'Apply bounded exception',
-                   'exception-exact-object', 'exception-expired-guard-denial', 'Exception retained after deadline',
+                   'Snapshot admitted exception', 'exception-exact-object', 'exception-expired-guard-denial', 'Exception retained after deadline',
                    'expired-exception-corrected-object-accepted', 'Remove expired exception',
                    'original-limits-restored-after-revocation', 'Remove deadline guard after original enforcement restored']
         positions = [events.index(name) for name in ordered]
         self.assertEqual(positions, sorted(positions))
+
+    def test_exception_snapshot_accepts_defaulting_but_detects_scope_change_or_replacement(self):
+        rendered = yaml.safe_load((ROOT / 'policies/kyverno/tests/exception-active/exception.yaml').read_text())
+        persisted = copy.deepcopy(rendered)
+        persisted['spec']['reportResult'] = 'skip'
+        persisted['metadata'].update({'uid': 'live-shaped-uid', 'generation': 1, 'resourceVersion': '1167'})
+        self.assertTrue(k8s.exception_preserves_rendered_spec(rendered, persisted))
+        self.assertTrue(k8s.exception_snapshot_unchanged(persisted, copy.deepcopy(persisted)))
+        changed_version = copy.deepcopy(persisted)
+        changed_version['metadata']['resourceVersion'] = '1168'
+        self.assertTrue(k8s.exception_snapshot_unchanged(persisted, changed_version))
+        for key, value in [('expiresAt', '2099-02-01T00:00:00Z'), ('policyRefs', []), ('matchConditions', [])]:
+            modified = copy.deepcopy(persisted)
+            modified['spec'][key] = value
+            with self.subTest(spec=key):
+                self.assertFalse(k8s.exception_preserves_rendered_spec(rendered, modified))
+                self.assertFalse(k8s.exception_snapshot_unchanged(persisted, modified))
+        for key, value in [('uid', 'replacement-uid'), ('generation', 2), ('deletionTimestamp', '2099-01-01T00:00:00Z'),
+                           ('name', 'other-exception'), ('namespace', 'other-namespace')]:
+            modified = copy.deepcopy(persisted)
+            modified['metadata'][key] = value
+            with self.subTest(metadata=key):
+                self.assertFalse(k8s.exception_snapshot_unchanged(persisted, modified))
+        missing_uid = copy.deepcopy(persisted)
+        del missing_uid['metadata']['uid']
+        self.assertFalse(k8s.exception_snapshot_unchanged(missing_uid, persisted))
 
     def test_reporting_permission_is_read_only_exact_resource_and_controller(self):
         role, binding = list(yaml.safe_load_all((ROOT / 'projects/k8s-gitops/kyverno-report-rbac.yaml').read_text()))
