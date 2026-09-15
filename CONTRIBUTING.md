@@ -10,6 +10,8 @@ Contributions should improve a reader's ability to understand, run or verify a d
 4. Update affected docs, examples and canonical controls together. Label unexecuted integrations as design guidance; do not claim a platform run from static validation.
 5. Open a PR with the source commit, commands/results, compatibility concerns, security impact and remaining limitations. Maintainers decide merge readiness; passing automation alone does not establish correctness.
 
+Before committing, follow the [contributor attribution preflight](docs/contributor-attribution.md) to check the author identity and accurately credit shared work.
+
 ## Content criteria
 
 - Tool entries explain purpose, maintained official source, license/access constraints, last verification date and when to choose the tool.
