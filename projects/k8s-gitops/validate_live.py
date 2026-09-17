@@ -58,6 +58,29 @@ def kyverno_policies_ready(document, expected=POLICIES):
                     for obj in policies.values()))
 
 
+def kyverno_bootstrap_unavailable(result):
+    """Recognize only the named policy webhook's initial availability errors.
+
+    Match the whole response so a denial or unrelated error cannot be hidden
+    alongside a retryable line. Unknown formats deliberately fail closed.
+    """
+    if result.returncode == 0:
+        return False
+    failure = re.fullmatch(
+        r'Error from server \(InternalError\): error when creating "[^"\r\n]+": '
+        r'Internal error occurred: failed calling webhook "validate-policy\.kyverno\.svc": (.+)',
+        result.stdout.strip(),
+    )
+    if failure is None:
+        return False
+    return bool(re.fullmatch(
+        r'(?:failed to call webhook: )?no endpoints available for service "kyverno-svc"'
+        r'|failed to call webhook: Post "https://kyverno-svc\.kyverno\.svc:443/policyvalidate\?timeout=[0-9]+(?:\.[0-9]+)?s": '
+        r'dial tcp [0-9a-fA-F.:\[\]]+:443: connect: connection refused',
+        failure[1],
+    ))
+
+
 def exception_preserves_rendered_spec(rendered, persisted):
     """Accept API-added defaults without allowing supplied intent to change."""
     return all(persisted.get("spec", {}).get(key) == value for key, value in rendered["spec"].items())
@@ -104,20 +127,29 @@ class Validation:
         self.steps.append({"check": name, "result": detail})
         print(f"{name}: {detail}", flush=True)
 
-    def run(self, name, args, *, check=True, timeout=180, input=None):
-        result = subprocess.run(args, cwd=ROOT, env=self.env, input=input, text=True,
-                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout)
-        output = result.stdout
+    def _log_command(self, name, outcome, output):
+        if isinstance(output, bytes):
+            output = output.decode("utf-8", errors="replace")
+        output = output or ""
         for secret in self.redact:
             output = output.replace(secret, "[REDACTED]")
         with (self.report / "commands.log").open("a", encoding="utf-8") as log:
-            log.write(f"\n## {name} (exit {result.returncode})\n{output}\n")
+            log.write(f"\n## {name} ({outcome})\n{output}\n")
+
+    def run(self, name, args, *, check=True, timeout=180, input=None):
+        try:
+            result = subprocess.run(args, cwd=ROOT, env=self.env, input=input, text=True,
+                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout)
+        except subprocess.TimeoutExpired as error:
+            self._log_command(name, "timed out", error.stdout)
+            raise
+        self._log_command(name, f"exit {result.returncode}", result.stdout)
         if check and result.returncode:
             raise RuntimeError(f"{name} failed (exit {result.returncode}); see commands.log")
         return result
 
-    def kube(self, name, *args, **kwargs):
-        return self.run(name, ["kubectl", "--context", CONTEXT, "--request-timeout=90s", *args], **kwargs)
+    def kube(self, name, *args, request_timeout="90s", **kwargs):
+        return self.run(name, ["kubectl", "--context", CONTEXT, f"--request-timeout={request_timeout}", *args], **kwargs)
 
     def apply_object(self, name, obj):
         return self.kube(name, "apply", "-f", "-", input=json.dumps(obj))
@@ -134,6 +166,32 @@ class Validation:
 
     def fixture(self, name):
         return ROOT / "policies/fixtures" / f"{name}.yaml"
+
+    def apply_initial_policies(self):
+        """Allow a short webhook startup race, never a policy enforcement failure."""
+        deadline = time.monotonic() + 120
+        for policy in POLICIES:
+            attempt = 0
+            while True:
+                remaining = deadline - time.monotonic()
+                # Avoid rounding a sub-millisecond remainder to kubectl's
+                # special zero timeout (unbounded). One budget covers all policies.
+                if remaining < 0.001:
+                    raise RuntimeError("Kyverno initial policy admission timed out; see commands.log")
+                attempt += 1
+                result = self.kube(
+                    f"Apply {policy} (bootstrap attempt {attempt})", "apply", "-f", f"policies/kyverno/{policy}.yaml",
+                    request_timeout=f"{min(10000, int(remaining * 1000))}ms",
+                    check=False, timeout=min(15, remaining),
+                )
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise RuntimeError("Kyverno initial policy admission timed out; see commands.log")
+                if result.returncode == 0:
+                    break
+                if not kyverno_bootstrap_unavailable(result):
+                    raise RuntimeError(f"Apply {policy} failed without a retryable startup error; see commands.log")
+                time.sleep(min(2, remaining))
 
     def wait_policies_ready(self, expected=POLICIES):
         deadline = time.monotonic() + 120
@@ -192,8 +250,7 @@ class Validation:
                  "--set", "features.policyExceptions.enabled=true", "--set", "features.policyExceptions.namespace=policy-exceptions",
                  "--wait", "--timeout", "5m"], timeout=360)
         self.kube("Ephemeral-container reporting permission", "apply", "-f", "projects/k8s-gitops/kyverno-report-rbac.yaml")
-        for policy in POLICIES:
-            self.kube("Apply " + policy, "apply", "-f", f"policies/kyverno/{policy}.yaml")
+        self.apply_initial_policies()
         self.wait_policies_ready()
         self.record("cluster-cni-and-admission-ready")
 

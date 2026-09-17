@@ -22,7 +22,184 @@ renderer = importlib.util.module_from_spec(RENDER_SPEC)
 RENDER_SPEC.loader.exec_module(renderer)
 
 
+BOOTSTRAP_PREFIX = ('Error from server (InternalError): error when creating "policies/kyverno/require-non-root.yaml": '
+                    'Internal error occurred: failed calling webhook "validate-policy.kyverno.svc": ')
+BOOTSTRAP_REFUSED = (BOOTSTRAP_PREFIX + 'failed to call webhook: Post '
+                    '"https://kyverno-svc.kyverno.svc:443/policyvalidate?timeout=10s": '
+                    'dial tcp 192.0.2.10:443: connect: connection refused')
+BOOTSTRAP_NO_ENDPOINTS = BOOTSTRAP_PREFIX + 'no endpoints available for service "kyverno-svc"'
+
+
+class FakeClock:
+    def __init__(self):
+        self.now = 0.0
+        self.sleeps = []
+
+    def monotonic(self):
+        return self.now
+
+    def sleep(self, seconds):
+        self.sleeps.append(seconds)
+        self.now += seconds
+
+
 class K8sValidationTests(unittest.TestCase):
+    def test_bootstrap_classifies_only_exact_webhook_startup_errors(self):
+        permitted = [BOOTSTRAP_REFUSED, BOOTSTRAP_NO_ENDPOINTS,
+                     BOOTSTRAP_PREFIX + 'failed to call webhook: no endpoints available for service "kyverno-svc"',
+                     BOOTSTRAP_REFUSED.replace('192.0.2.10', '[2001:db8::10]')]
+        for text in permitted:
+            with self.subTest(text=text):
+                self.assertTrue(k8s.kyverno_bootstrap_unavailable(subprocess.CompletedProcess([], 1, text + '\n')))
+                self.assertFalse(k8s.kyverno_bootstrap_unavailable(subprocess.CompletedProcess([], 0, text)))
+        rejected = [
+            BOOTSTRAP_REFUSED.replace('validate-policy.kyverno.svc', 'validate-policy.kyverno.svc.other'),
+            BOOTSTRAP_REFUSED.replace('kyverno-svc.kyverno.svc:443', 'other-service.kyverno.svc:443'),
+            BOOTSTRAP_REFUSED.replace('/policyvalidate?', '/other-path?'),
+            BOOTSTRAP_NO_ENDPOINTS.replace('service "kyverno-svc"', 'service "kyverno-svc-other"'),
+            BOOTSTRAP_REFUSED.replace('connect: connection refused', 'context deadline exceeded'),
+            BOOTSTRAP_REFUSED.replace('connect: connection refused', 'x509: certificate signed by unknown authority'),
+            BOOTSTRAP_PREFIX + 'admission denied: invalid policy',
+            BOOTSTRAP_PREFIX + 'remote error: tls: internal error',
+            'Error from server (Forbidden): insufficient RBAC permissions',
+            'Error from server (Invalid): unknown field in policy',
+            'dial tcp 192.0.2.10:443: connect: connection refused',
+            BOOTSTRAP_REFUSED + '\nError from server (Forbidden): another failure',
+        ]
+        for text in rejected:
+            with self.subTest(text=text):
+                self.assertFalse(k8s.kyverno_bootstrap_unavailable(subprocess.CompletedProcess([], 1, text)))
+
+    def test_bootstrap_retries_availability_errors_and_logs_every_attempt(self):
+        for text in (BOOTSTRAP_REFUSED, BOOTSTRAP_NO_ENDPOINTS):
+            with self.subTest(text=text), tempfile.TemporaryDirectory() as temporary:
+                validation = object.__new__(k8s.Validation)
+                validation.report, validation.env, validation.redact = Path(temporary), {}, []
+                responses = [subprocess.CompletedProcess([], 1, text)] + [
+                    subprocess.CompletedProcess([], 0, 'created') for _ in k8s.POLICIES]
+                with patch.object(k8s.subprocess, 'run', side_effect=responses) as run, \
+                        patch.object(k8s.time, 'monotonic', return_value=0), patch.object(k8s.time, 'sleep') as sleep:
+                    validation.apply_initial_policies()
+                self.assertEqual(run.call_count, 5)
+                sleep.assert_called_once_with(2)
+                paths = [call.args[0][-1] for call in run.call_args_list]
+                self.assertEqual(paths, [f'policies/kyverno/{name}.yaml' for name in (k8s.POLICIES[0], *k8s.POLICIES)])
+                for call in run.call_args_list:
+                    self.assertIn('--request-timeout=10000ms', call.args[0])
+                    self.assertEqual(call.args[0][1:3], ['--context', k8s.CONTEXT])
+                    self.assertEqual(call.kwargs['timeout'], 15)
+                log = (validation.report / 'commands.log').read_text()
+                self.assertEqual(log.count('## Apply '), 5)
+                self.assertIn('bootstrap attempt 1) (exit 1)', log)
+                self.assertIn('bootstrap attempt 2) (exit 0)', log)
+
+    def test_bootstrap_permanent_error_fails_without_retry(self):
+        validation = object.__new__(k8s.Validation)
+        result = subprocess.CompletedProcess([], 1, BOOTSTRAP_PREFIX + 'admission denied: invalid policy')
+        with patch.object(validation, 'kube', return_value=result) as kube, \
+                patch.object(k8s.time, 'monotonic', return_value=0), patch.object(k8s.time, 'sleep') as sleep:
+            with self.assertRaisesRegex(RuntimeError, 'without a retryable startup error'):
+                validation.apply_initial_policies()
+        kube.assert_called_once()
+        sleep.assert_not_called()
+
+    def test_bootstrap_transient_then_permanent_error_stops(self):
+        validation = object.__new__(k8s.Validation)
+        responses = [subprocess.CompletedProcess([], 1, BOOTSTRAP_REFUSED),
+                     subprocess.CompletedProcess([], 1, 'Error from server (Forbidden): access denied')]
+        with patch.object(validation, 'kube', side_effect=responses) as kube, \
+                patch.object(k8s.time, 'monotonic', return_value=0), patch.object(k8s.time, 'sleep') as sleep:
+            with self.assertRaisesRegex(RuntimeError, 'without a retryable startup error'):
+                validation.apply_initial_policies()
+        self.assertEqual(kube.call_count, 2)
+        sleep.assert_called_once_with(2)
+
+    def test_bootstrap_deadline_is_shared_and_bounds_calls_and_sleep(self):
+        validation = object.__new__(k8s.Validation)
+        clock = FakeClock()
+
+        def apply(name, *args, **kwargs):
+            if args[-1].endswith('require-non-root.yaml'):
+                self.assertEqual(kwargs['timeout'], 15)
+                self.assertEqual(kwargs['request_timeout'], '10000ms')
+                clock.now = 119.25
+                return subprocess.CompletedProcess([], 0, 'created')
+            self.assertEqual(kwargs['timeout'], 0.75)
+            self.assertEqual(kwargs['request_timeout'], '750ms')
+            clock.now = 119.5
+            return subprocess.CompletedProcess([], 1, BOOTSTRAP_REFUSED)
+
+        with patch.object(validation, 'kube', side_effect=apply) as kube, \
+                patch.object(k8s.time, 'monotonic', side_effect=clock.monotonic), \
+                patch.object(k8s.time, 'sleep', side_effect=clock.sleep):
+            with self.assertRaisesRegex(RuntimeError, 'initial policy admission timed out'):
+                validation.apply_initial_policies()
+        self.assertEqual(kube.call_count, 2)
+        self.assertEqual(clock.sleeps, [0.5])
+        self.assertEqual(clock.now, 120)
+
+    def test_bootstrap_never_issues_zero_timeout_near_deadline(self):
+        validation = object.__new__(k8s.Validation)
+        with patch.object(validation, 'kube') as kube, \
+                patch.object(k8s.time, 'monotonic', side_effect=[0, 119.9995]):
+            with self.assertRaisesRegex(RuntimeError, 'initial policy admission timed out'):
+                validation.apply_initial_policies()
+        kube.assert_not_called()
+
+    def test_bootstrap_late_success_does_not_extend_deadline(self):
+        validation = object.__new__(k8s.Validation)
+        with patch.object(validation, 'kube', return_value=subprocess.CompletedProcess([], 0, 'created')) as kube, \
+                patch.object(k8s.time, 'monotonic', side_effect=[0, 0, 120]):
+            with self.assertRaisesRegex(RuntimeError, 'initial policy admission timed out'):
+                validation.apply_initial_policies()
+        kube.assert_called_once()
+
+    def test_bootstrap_subprocess_timeout_logs_redacted_partial_output_and_stops(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            validation = object.__new__(k8s.Validation)
+            validation.report, validation.env, validation.redact = Path(temporary), {}, ['synthetic-private-value']
+            failure = subprocess.TimeoutExpired(['kubectl'], 15, output=b'synthetic-private-value\xff')
+            with patch.object(k8s.subprocess, 'run', side_effect=failure) as run, \
+                    patch.object(k8s.time, 'monotonic', return_value=0), patch.object(k8s.time, 'sleep') as sleep:
+                with self.assertRaises(subprocess.TimeoutExpired):
+                    validation.apply_initial_policies()
+            run.assert_called_once()
+            sleep.assert_not_called()
+            log = (validation.report / 'commands.log').read_text()
+            self.assertIn('(timed out)', log)
+            self.assertIn('[REDACTED]', log)
+            self.assertNotIn('synthetic-private-value', log)
+
+    def test_kube_retains_default_request_timeout_and_accepts_bounded_override(self):
+        validation = object.__new__(k8s.Validation)
+        with patch.object(validation, 'run') as run:
+            validation.kube('default', 'get', 'pods')
+            self.assertIn('--request-timeout=90s', run.call_args.args[1])
+            validation.kube('bounded', 'get', 'pods', request_timeout='750ms', timeout=0.75)
+            self.assertIn('--request-timeout=750ms', run.call_args.args[1])
+            self.assertEqual(run.call_args.kwargs['timeout'], 0.75)
+
+    def test_start_still_applies_all_policies_before_readiness_and_success(self):
+        validation = object.__new__(k8s.Validation)
+        validation.env = {'KUBECONFIG': '/unused-test-config'}
+        events = []
+
+        def command(name, *args, **kwargs):
+            events.append(name)
+            return subprocess.CompletedProcess([], 0, 'created')
+
+        with patch.object(validation, 'run', side_effect=command), patch.object(validation, 'kube', side_effect=command), \
+                patch.object(validation, 'wait_policies_ready', side_effect=lambda: events.append('policies-ready')), \
+                patch.object(validation, 'record', side_effect=events.append), \
+                patch.object(k8s.time, 'monotonic', return_value=0):
+            validation.start()
+        ordered = ['Install Kyverno', 'Ephemeral-container reporting permission'] + [
+            f'Apply {policy} (bootstrap attempt 1)' for policy in k8s.POLICIES] + [
+            'policies-ready', 'cluster-cni-and-admission-ready']
+        positions = [events.index(name) for name in ordered]
+        self.assertEqual(positions, sorted(positions))
+        self.assertEqual(sum(name.startswith('Apply ') for name in events), len(k8s.POLICIES))
+
     def test_rendered_exception_uses_native_expiry_and_supported_scope_only(self):
         before = dt.datetime.now(dt.timezone.utc)
         command = [sys.executable, str(ROOT / 'policies/render-exception.py'), '--minutes', '1',
