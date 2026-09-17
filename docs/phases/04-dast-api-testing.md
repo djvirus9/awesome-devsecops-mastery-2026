@@ -6,6 +6,8 @@ Map each route and identity to expected access. Test authorized behavior as well
 
 A passive baseline inspects observed responses and can complement these tests. It does not prove application authorization. The reference path does not add active scanners or arbitrary external-target workflows. Any optional observation uses the synthetic isolated service and retains its report.
 
+For assessment-level scope, manual code review, mobile coverage gaps, and retest handoff, use the [application security assessment record](../../templates/application-security-assessment.md). It is a planning template, not permission to test an external system or evidence of mobile validation.
+
 The application owner maintains contract/authorization tests; AppSec reviews requirements and triage. Definition of done: expected routes/owners covered, test failures visible, results retained, and TLS/gateway/real-identity coverage gaps documented. Continue to [Phase 5](05-cd-cloud-k8s.md).
 
 References: [OpenAPI specification](https://spec.openapis.org/oas/latest.html), [OWASP authorization guidance](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html), [ZAP baseline coverage](https://www.zaproxy.org/docs/docker/baseline-scan/).

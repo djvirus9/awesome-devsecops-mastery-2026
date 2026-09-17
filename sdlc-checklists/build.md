@@ -8,3 +8,5 @@ Scope / owner / review date: [fill]. Use [canonical controls](../templates/contr
 - [ ] C11: suppressions reference reviewed, unexpired exceptions.
 
 Attach check run, artifact references and failure-case evidence. Follow [secure CI criteria](../templates/secure-ci-guidelines.md).
+
+Record manual code-review scope, observations, and missing regression coverage in the [application security assessment record](../templates/application-security-assessment.md); automated checks do not replace that review.

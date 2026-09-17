@@ -113,6 +113,7 @@ The automated signed path installs Helm chart **0.10.8**, whose default image is
 - `CreateContainerConfigError`: inspect whether `sample-api-tokens` exists and contains `API_TOKENS_JSON`.
 - Denied workload: identify the named policy, inspect the container or Pod context, and fix the manifest before retrying. Reapplying policy YAML resets it to Audit/Warn.
 - Policies not ready: inspect `status.conditionStatus`; `RBACPermissionsGranted: False` for `pods/ephemeralcontainers` means the [read-only reporting RBAC](kyverno-report-rbac.yaml) from Lab 04 is missing. Do not remove the subresource match to silence the error.
+- Initial Kyverno webhook unavailable: the harness retries only the named policy webhook's connection-refused or missing-endpoint errors while creating the initial policies, with one 120-second monotonic budget across all four policies. Each attempt is logged; request, subprocess, and sleep durations are bounded by the remaining budget. Policy/schema/RBAC denials, TLS errors, unknown errors, and subprocess timeouts stop the run. Inspect `commands.log` and controller diagnostics after failure; do not disable webhooks or change `failurePolicy` to make a run pass. Policy readiness and all subsequent admission assertions still have to succeed.
 - Network test failure: check both Job logs, Cilium readiness, service endpoints, and actual NetworkPolicy selection. A DNS failure is not an expected denial result.
 - Unexpected cluster: stop and use the exact `kind-devsecops-reference` context; the helper scripts fix that context explicitly.
 
