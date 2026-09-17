@@ -1,0 +1,32 @@
+apiVersion: "batch/v1"
+kind: "Job"
+metadata:
+  name: "good-job"
+  namespace: "devsecops-reference"
+spec:
+  template:
+    metadata:
+      labels:
+        app: "sample-api"
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile:
+          type: "RuntimeDefault"
+      containers:
+        -
+          name: "sample-api"
+          image: "devsecops-reference:local"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - "ALL"
+          resources:
+            limits:
+              cpu: "250m"
+              memory: "128Mi"
+      restartPolicy: "Never"

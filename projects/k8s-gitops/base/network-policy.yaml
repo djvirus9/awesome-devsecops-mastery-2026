@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: sample-api-boundary
+  namespace: devsecops-reference
+spec:
+  podSelector:
+    matchLabels:
+      app: sample-api
+  # Egress isolation with no egress rules denies outbound connections. Omit the
+  # empty list: the API omits it on read, causing generation-only apply/diff churn.
+  # The in-memory API needs no DNS, database, or outbound Internet connectivity.
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              access: sample-api
+      ports:
+        - protocol: TCP
+          port: 8080

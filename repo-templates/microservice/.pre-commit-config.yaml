@@ -1,0 +1,5 @@
+# Compatibility notice only, not an installable pre-commit configuration.
+# The generator copies the canonical root hook configuration with its dependencies.
+status: compatibility-reference
+canonical_config: ../../.pre-commit-config.yaml
+setup_guide: README.md

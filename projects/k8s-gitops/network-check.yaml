@@ -1,0 +1,90 @@
+apiVersion: "batch/v1"
+kind: "Job"
+metadata:
+  name: "reference-network-allowed"
+  namespace: "devsecops-reference"
+spec:
+  activeDeadlineSeconds: 60
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app: "network-check"
+        access: "sample-api"
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile:
+          type: "RuntimeDefault"
+      containers:
+        -
+          name: "check"
+          image: "devsecops-reference:local"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - "ALL"
+          resources:
+            limits:
+              cpu: "250m"
+              memory: "128Mi"
+          imagePullPolicy: "Never"
+          command:
+            - "python"
+            - "-c"
+            - "import os, socket, urllib.error, urllib.request\nurl = 'http://sample-api.devsecops-reference.svc.cluster.local:8080/health'\nsocket.getaddrinfo('sample-api.devsecops-reference.svc.cluster.local', 8080)\nexpect_allowed = os.environ['EXPECT_ALLOWED'] == 'true'\ntry:\n    with urllib.request.urlopen(url, timeout=3) as response:\n        assert response.status == 200\nexcept (TimeoutError, urllib.error.URLError) as error:\n    reason = getattr(error, 'reason', error)\n    if expect_allowed or not isinstance(reason, (TimeoutError, socket.timeout)):\n        raise\n    print('PASS: unlabelled client timed out after successful DNS resolution')\nelse:\n    if not expect_allowed:\n        raise SystemExit('FAIL: unlabelled client reached the service')\n    print('PASS: labelled client reached the service')\n"
+          env:
+            -
+              name: "EXPECT_ALLOWED"
+              value: "true"
+      restartPolicy: "Never"
+---
+apiVersion: "batch/v1"
+kind: "Job"
+metadata:
+  name: "reference-network-denied"
+  namespace: "devsecops-reference"
+spec:
+  activeDeadlineSeconds: 60
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app: "network-check"
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile:
+          type: "RuntimeDefault"
+      containers:
+        -
+          name: "check"
+          image: "devsecops-reference:local"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - "ALL"
+          resources:
+            limits:
+              cpu: "250m"
+              memory: "128Mi"
+          imagePullPolicy: "Never"
+          command:
+            - "python"
+            - "-c"
+            - "import os, socket, urllib.error, urllib.request\nurl = 'http://sample-api.devsecops-reference.svc.cluster.local:8080/health'\nsocket.getaddrinfo('sample-api.devsecops-reference.svc.cluster.local', 8080)\nexpect_allowed = os.environ['EXPECT_ALLOWED'] == 'true'\ntry:\n    with urllib.request.urlopen(url, timeout=3) as response:\n        assert response.status == 200\nexcept (TimeoutError, urllib.error.URLError) as error:\n    reason = getattr(error, 'reason', error)\n    if expect_allowed or not isinstance(reason, (TimeoutError, socket.timeout)):\n        raise\n    print('PASS: unlabelled client timed out after successful DNS resolution')\nelse:\n    if not expect_allowed:\n        raise SystemExit('FAIL: unlabelled client reached the service')\n    print('PASS: labelled client reached the service')\n"
+          env:
+            -
+              name: "EXPECT_ALLOWED"
+              value: "false"
+      restartPolicy: "Never"

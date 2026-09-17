@@ -1,0 +1,14 @@
+repos:
+  - repo: local
+    hooks:
+      - id: gitleaks
+        name: Secrets in staged changes
+        entry: .tools/bin/gitleaks git --pre-commit --staged --redact --no-banner
+        language: system
+        pass_filenames: false
+      - id: semgrep
+        name: Sample source security rules
+        entry: semgrep scan --config configs/semgrep.yml --error --metrics off
+        language: python
+        additional_dependencies: [semgrep==1.177.0]
+        files: ^samples/.*\.(py|js|ts)$

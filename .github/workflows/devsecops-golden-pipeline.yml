@@ -4,25 +4,150 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_call:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 5 * * 1'
 
 permissions:
   contents: read
 
+concurrency:
+  group: checks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  golden-pipeline:
-    runs-on: ubuntu-latest
+  quality:
+    name: Quality (Python ${{ matrix.python }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.12', '3.14']
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python }}
+      - run: make setup PYTHON=python
+      - run: make test validate
 
-      - name: Policy check (placeholder)
-        run: echo "OPA/Conftest or custom policy checks"
+  sast:
+    name: SAST
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    container:
+      image: semgrep/semgrep:1.177.0@sha256:acaac22ffc7b7cc5926de0751b223bce0b2491c33d18422fa72f632c78d81198
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Validate rules and regression fixtures
+        run: |
+          semgrep scan --validate --config configs/semgrep.yml --metrics off
+          semgrep --test --config configs/semgrep.yml labs/lab-01-precommit-sast/fixtures/no_eval.py
+          semgrep --test --config configs/semgrep.yml labs/lab-01-precommit-sast/fixtures/no_eval.js
+      - name: Scan sample source with a failing gate
+        run: |
+          mkdir -p reports
+          semgrep scan --config configs/semgrep.yml --error --metrics off --json-output reports/semgrep.json samples
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: sast-report
+          path: reports/semgrep.json
+          retention-days: 14
+          if-no-files-found: error
 
-      - name: SAST scan (placeholder)
-        run: echo "Run SAST (Semgrep, CodeQL, etc.)"
+  dependencies:
+    name: Dependency and secret scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install checksum-pinned scanners
+        run: python3 scripts/install_tool.py trivy gitleaks
+      - name: Scan current source for secrets
+        run: |
+          mkdir -p reports
+          .tools/bin/gitleaks dir . --redact --no-banner --report-format json --report-path reports/gitleaks.json
+      - name: Scan resolved dependencies with a refreshed database
+        run: .tools/bin/trivy fs --config configs/trivy.yaml --format json --output reports/trivy.json .
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: dependency-and-secret-reports
+          path: reports/*.json
+          retention-days: 14
+          if-no-files-found: error
 
-      - name: Dependency scan (placeholder)
-        run: echo "Run SCA (OWASP Dependency-Check, Snyk, etc.)"
+  policies:
+    name: Policy fixtures
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - run: make setup PYTHON=python
+      - run: python3 scripts/install_tool.py kyverno gator
+      - run: make policy-test
 
-      - name: SBOM generation (placeholder)
-        run: echo "Generate SBOM (Syft, CycloneDX)"
+  image:
+    name: Container and SBOM
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - run: make setup PYTHON=python
+      - run: python scripts/install_tool.py syft trivy
+      - run: make container container-test sbom
+      - name: Scan the built image
+        run: .tools/bin/trivy image --config configs/trivy.yaml --scanners vuln --format json --output reports/image-scan.json devsecops-reference:local
+      - name: Record source and local image identity
+        env:
+          SOURCE_COMMIT: ${{ github.sha }}
+        run: |
+          docker image inspect devsecops-reference:local > reports/local-image.json
+          printf '%s\n' "$SOURCE_COMMIT" > reports/source-commit.txt
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: image-evidence
+          path: reports/
+          retention-days: 14
+          if-no-files-found: error
+
+  required:
+    name: Required checks
+    if: always()
+    needs: [quality, sast, dependencies, policies, image]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Require successful checks, including non-skipped validation
+        env:
+          CHECK_RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PY'
+          import json, os, sys
+          results = json.loads(os.environ['CHECK_RESULTS'])
+          failed = [name for name, result in results.items()
+                    if result['result'] != 'success']
+          if failed:
+              sys.exit('Unsuccessful required jobs: ' + ', '.join(failed))
+          print('All required checks passed')
+          PY

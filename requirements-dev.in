@@ -1,0 +1,2 @@
+-r samples/sample-api/requirements.in
+PyYAML==6.0.3

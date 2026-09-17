@@ -1,0 +1,19 @@
+exit-code: 1
+severity:
+  - HIGH
+  - CRITICAL
+timeout: 10m
+vulnerability:
+  ignore-unfixed: false
+scan:
+  file-patterns:
+    - 'pip:(^|/)requirements-dev\.txt$'
+  scanners:
+    - vuln
+    - secret
+  skip-dirs:
+    - .git
+    - .venv
+    - .tools
+    - .cache
+    - reports
