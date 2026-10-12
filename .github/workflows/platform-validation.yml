@@ -41,7 +41,7 @@ jobs:
           REGISTRY_TOKEN: ${{ github.event_name == 'workflow_dispatch' && secrets.GITHUB_TOKEN || '' }}
           REGISTRY_USER: ${{ github.actor }}
         run: bash projects/k8s-gitops/validate-live.sh
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: kubernetes-integration-evidence
@@ -59,7 +59,7 @@ jobs:
           persist-credentials: false
       - name: Validate synthetic metrics, dashboard queries and rendered panels
         run: python3 scripts/validate_dashboard.py
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: dashboard-integration-evidence
