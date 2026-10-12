@@ -54,7 +54,7 @@ jobs:
         run: |
           mkdir -p reports
           semgrep scan --config configs/semgrep.yml --error --metrics off --json-output reports/semgrep.json samples
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: sast-report
@@ -78,7 +78,7 @@ jobs:
           .tools/bin/gitleaks dir . --redact --no-banner --report-format json --report-path reports/gitleaks.json
       - name: Scan resolved dependencies with a refreshed database
         run: .tools/bin/trivy fs --config configs/trivy.yaml --format json --output reports/trivy.json .
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: dependency-and-secret-reports
@@ -123,7 +123,7 @@ jobs:
         run: |
           docker image inspect devsecops-reference:local > reports/local-image.json
           printf '%s\n' "$SOURCE_COMMIT" > reports/source-commit.txt
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: image-evidence
