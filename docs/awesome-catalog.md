@@ -93,6 +93,7 @@ A discovery index of tools, platforms, and references. Listing does not mean tha
 - [Nuclei](https://github.com/projectdiscovery/nuclei)
 - [42Crunch](https://42crunch.com/)
 - [OpenAPI](https://www.openapis.org/)
+- [Website Vulnerability Scanner](https://github.com/RanaKhan77/Website-Vulnerability-Scanner)
 
 ## CI/CD Security
 
@@ -101,6 +102,7 @@ A discovery index of tools, platforms, and references. Listing does not mean tha
 - [Tekton](https://tekton.dev/)
 - [Argo CD](https://argo-cd.readthedocs.io/)
 - [Flux](https://fluxcd.io/)
+- [2mny-security-scan](https://github.com/RanaKhan77/2mny-security-scan)
 
 ## Policy as Code and Governance
 
